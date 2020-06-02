@@ -1,11 +1,12 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.5
+-- mun lander alpha.0.6
 -- by lewsidboi, 2020
 
 --game parameters
 start_fuel=100
+base_ground=110
 frame=0
 seconds=0
 gravity=.02
@@ -13,25 +14,27 @@ thrust=.15
 start_x=58
 start_y=10
 last_edge=0
+game=nil
 
 --tables
-game={}
 ship={}
 death_points={}
 ground_lines={}
 cam={}
 stars={}
 pad={}
+flag={sprite=2,drop_sprite=7}
+banner={good=11,bad=8,left=0,right=128}
 
 function _init()
-	gen_ship(start_x,start_y,0,.2)
- gen_pad()
- gen_ground()
- gen_stars()
+	init_ship(start_x,start_y,0,.2)
+ init_pad(128,80)
+ init_ground()
+ init_stars()
 end
 
 function _draw()
-	cls(1)
+	cls()
 
 	draw_pad()
 	draw_ground()
@@ -39,15 +42,7 @@ function _draw()
 	
 	foreach(stars, draw_star)
 	
-	print("fuel: "..ship.fuel,cam.x,0,13)
-	print("speed: "..ship.speed,cam.x,7,13)
- print("game: "..game,cam.x,14,13)
-
- --plant flag
-	--if(game=="over") then
-	-- spr(2,ship.x+8,ship.y)
-	--end
-
+ draw_ui()
 end
 
 function _update()
@@ -55,8 +50,8 @@ function _update()
 	seconds=frame/30
 	frame=frame+1
 
- gen_ground()
- gen_stars()
+ init_ground()
+ init_stars()
  
 	ship.speed=flr((ship.dy*100)/5)
 
@@ -65,21 +60,21 @@ function _update()
 	check_end()
 end
 -->8
---gens
+--inits
 
-function gen_pad()
+function init_pad(base_x,base_y)
 	pad=
 	{
 		sprite=8,
 		width=16,
 		height=16,
 		surface=12,
-		x=rnd(128)+128,
-		y=rnd(10)+100,
+		x=rnd(128)+base_x,
+		y=rnd(10)+base_y,
 	}
 end
 
-function gen_ship(start_x, start_y, start_dx, start_dy)
+function init_ship()
 	--up_sprite: 3 = off, 4 = on, 5 = on-alt
 	--left_sprite: 19 = off, 20 = on, 21 = on-alt
 	--right_sprite: 19 = off, 22 = on, 23 = on-alt
@@ -87,6 +82,7 @@ function gen_ship(start_x, start_y, start_dx, start_dy)
 	ship= 
 	{
 		sprite=1,
+		drop_sprite=6,
 		x=start_x,
 		y=start_y,
 		dx=0,
@@ -108,20 +104,20 @@ function gen_ship(start_x, start_y, start_dx, start_dy)
 	return ship
 end
 
-function gen_ground()
+function init_ground()
 	distance=128
 	distance+=ship.x+128
 	
 	while (last_edge<distance) do
 		new_edge=0
-		new_top=100+rnd(28)
+		new_top=base_ground+rnd(128-base_ground)
 
 		if(#ground_lines>0) then
 			new_edge=last_edge+rnd(25)
 		end
 		
 		--check for the pad
-		if(new_edge>=pad.x-5 and
+		if(new_edge>=pad.x-8 and
 		 new_edge<=pad.x+pad.width) then
 	 	new_edge=pad.x
 	 	new_top=pad.y+pad.height
@@ -139,16 +135,16 @@ function gen_ground()
 	end
 end
 
-function gen_stars()
+function init_stars()
   screen=flr(cam.x/128)
   if(#stars<60*screen+1) then
   	for i=1,60 do
   	 --place stars up to one 
   	 --screen away so we don't 
   	 --see them spawn in
-				star = {
+				star={
 					x=rnd(screen+1*256)+screen*256,
-					y=rnd(115)
+					y=rnd(base_ground)
 				}
 		 	add(stars,star)
 			end
@@ -258,7 +254,7 @@ end
 function above_ground()
  if(ship.x<cam.x) then
   --ship is off screen
-  if(flr(ship.y)+ship.height>110) then
+  if(flr(ship.y)+ship.height>base_ground) then
   	return false
   end
  elseif(#death_points>1 and
@@ -293,6 +289,21 @@ end
 -->8
 --draws
 
+function draw_ui()
+	print("fuel: "..ship.fuel,cam.x,0,13)
+	--print("speed: "..ship.speed,cam.x,7,13)
+ --print("game: "..game,cam.x,14,13)
+
+	if(game=="over-good") then
+ 	draw_banner(banner.good,
+			"mission accomplished",25)
+	elseif(game=="over-bad" or
+		game=="over-okay") then	
+		draw_banner(banner.bad,
+			"mission failed",35)
+	end
+end
+
 function draw_ship()
 	--ship crashed, burn
 	if(ship.alive==0) then
@@ -307,19 +318,27 @@ function draw_ship()
 	camera(cam.x)
 
 	--ship
-	spr(ship.sprite, ship.x, ship.y)
+	spr(ship.drop_sprite,ship.x+1,ship.y)
+	spr(ship.drop_sprite,ship.x-1,ship.y)
+	spr(ship.sprite,ship.x,ship.y)
 	
 	--thrust
-	spr(ship.up_sprite, ship.x, ship.y + 8)
-	spr(ship.left_sprite, ship.x - 2, ship.y)
-	spr(ship.right_sprite, ship.x + 2, ship.y)
+	spr(ship.up_sprite,ship.x, ship.y + 8)
+	spr(ship.left_sprite,ship.x-2,ship.y)
+	spr(ship.right_sprite,ship.x+2,ship.y)
 
+	--raise flag
+	if(game=="over-good") then
+	 spr(flag.drop_sprite,ship.x+2,ship.y-7)
+	 spr(flag.drop_sprite,ship.x+4,ship.y-7)
+ 	spr(flag.sprite,ship.x+3,ship.y-7)
+ end
 end
 
 function draw_star(star)
 	--draw star if nothing else is there
-	if(pget(star.x, star.y) != 7) then
-		pset(star.x, star.y, 6)
+	if(pget(star.x,star.y)!=7) then
+		pset(star.x,star.y,6)
 	end
 end
 
@@ -327,27 +346,22 @@ function draw_ground()
 	for i=1,#ground_lines-1 do
 	 if(ground_lines[i+1].x>=flr(cam.x)-10
 	  and ground_lines[i+1].x<cam.x+256) then
-		 for j=0, 28 do
+		 --fill lines
+		 for j=0,base_ground-pad.y+1 do
 			 line(ground_lines[i].x,
 			  ground_lines[i].y+j,
 			  ground_lines[i+1].x,
 			  ground_lines[i+1].y+j,7)
 		 end
-	 	line(ground_lines[i].x,
-			 ground_lines[i].y,
-			 ground_lines[i+1].x,
-			 ground_lines[i+1].y, 7)
-		 line(ground_lines[i].x,
-			 ground_lines[i].y,
-			 ground_lines[i].x, 128, 7)
 	 end
 	end	
 	
-	--search for and store the visible tops
-	distance=ship.x + 128
+	--search for and store 
+	--the visible tops
+	distance=ship.x+128
 	for x=flr(cam.x), distance do
-		for y=100,128 do
-			if(pget(x,y) == 7) then
+		for y=base_ground-pad.y,128 do
+			if(pget(x,y)==7) then
 				death_points[x]=y
 				break --stop at the top
 			end
@@ -355,7 +369,7 @@ function draw_ground()
 	end
 	
 	--highlight the death line
-	for i=flr(cam.x), #death_points do
+	for i=flr(cam.x),#death_points do
 		pset(i,death_points[i],13)
 	end
 	
@@ -372,20 +386,38 @@ function draw_pad()
  		2,2)
  end
 end
+
+function draw_banner(which,message,offset)
+ if(banner.left<128) then
+ 	banner.left+=10
+ end
+ if(banner.right>0) then
+ 	banner.right-=10
+ end
+	rectfill(cam.x,50,
+  cam.x+banner.left,55,which)
+ rectfill(cam.x+128,55,
+ 	cam.x+banner.right,60,which)
+	
+	if(banner.left>=128) then
+		print(message,cam.x+offset+1,54,1)
+ 	print(message,cam.x+offset,53,7)
+	end
+end
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000055000000000000000000009a99a900a9aa9a000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700005665000dc9ac0000000000009aa90000a99a0000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000056666500d9aaac00000000000099000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000056cc6500dc9ac0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700566666650d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000565665650d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000666556660d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000055000000000000000000009a99a900a9aa9a000011000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700005665000dc9ac0000000000009aa90000a99a0000111100011111000000000000000000000000000000000000000000000000000000000000000000
+00077000056666500d9aaac00000000000099000000aa00001111110011111100000000000000000000000000000000000000000000000000000000000000000
+00077000056cc6500dc9ac0000000000000000000000000001111110011111000000000000000000000000000000000000000000000000000000000000000000
+00700700566666650d00000000000000000000000000000011111111010000000000000000000000000000000000000000000000000000000000000000000000
+00000000565665650d00000000000000000000000000000011111111010000000000000000000000000000000000000000000000000000000000000000000000
+00000000666556660d00000000000000000000000000000011111111010000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000a00000000000000000000000000000000000000000000000000000000000000000000b00000000000000800000000000000000000000000000000
 0000000000a90000000a00000000000090000000a0000000000000090000000a5000000000000005500000000000000500000000000000000000000000000000
 00000000009a600000a9600000000000a90000009a0000000000009a000000a96500000000000056650000000000005600000000000000000000000000000000
-000000000066060000660600000000009a000000a9000000000000a90000009a65aaaaa559999956659999955aaaaa5600000000000000000000000000000000
+000000000066060000660600000000009a000000a9000000000000a90000009a65aaaaaa9999995665999999aaaaaa5600000000000000000000000000000000
 00000000060666000606660000000000a0000000900000000000000a000000096550005665000556655000566500055600000000000000000000000000000000
 000000000a6ccc90096ccca000000000000000000000000000000000000000006505050550505056650505055050505600000000000000000000000000000000
 0000000095c6555aa5c6555900000000000000000000000000000000000000006500500660050056650050066005005600000000000000000000000000000000
