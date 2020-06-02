@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.4
+-- mun lander alpha.0.5
 -- by lewsidboi, 2020
 
 --game parameters
@@ -121,8 +121,8 @@ function gen_ground()
 		end
 		
 		--check for the pad
-		if(new_edge>pad.x and
-		 new_edge<pad.x+pad.width) then
+		if(new_edge>=pad.x-5 and
+		 new_edge<=pad.x+pad.width) then
 	 	new_edge=pad.x
 	 	new_top=pad.y+pad.height
 	 	add(ground_lines,{x=pad.x,
@@ -177,25 +177,26 @@ function control_ship()
 		end
 
 		--right
-		if (btn(1) and ship.fuel > 0) then
-			ship.dx += thrust
-			ship.fuel -= 1
+		if (btn(1) and ship.fuel>0) then
+			ship.dx+=thrust
+			ship.fuel-=1
 			sfx(0)
 
-			if (ship.left_sprite == 19 or ship.left_sprite == 20) then 
-				ship.left_sprite = 21
+			if (ship.left_sprite==19 
+				or ship.left_sprite==20) then 
+				ship.left_sprite=21
 			else
-				ship.left_sprite = 20
+				ship.left_sprite=20
 			end
 		else
-			ship.left_sprite = 19
+			ship.left_sprite=19
 		end
 
 		--up
-		if (btn(2) and ship.fuel > 0) then
-			ship.dy -= thrust
-			ship.up_sprite = 4 + rnd(2)
-			ship.fuel -= 1
+		if (btn(2) and ship.fuel>0) then
+			ship.dy-=thrust
+			ship.up_sprite=4+rnd(2)
+			ship.fuel-=1
 			sfx(0)
 		else
 			ship.up_sprite = 3
@@ -207,34 +208,35 @@ end
 
 function move_ship()
 	if(game=="started") then
-		ship.x += ship.dx
+		ship.x+=ship.dx
 	end
 		
 	--if the ship is above ground,
 	--move it
 	if(above_ground() 
 		and not on_pad()) then
-		ship.dy += gravity
-		ship.y += ship.dy
+		ship.dy+=gravity
+		ship.y+=ship.dy
 	else
 		--we are coming in too hot
-		if(ship.speed > 10 and ship.alive == 1) then
-			ship.alive = 0
-			ship.sprite = 18
-			ship.left_sprite = 19
-			ship.right_sprite = 19
-			ship.up_sprite = 3
+		if(ship.speed>10 
+			and ship.alive==1) then
+			ship.alive=0
+			ship.sprite=18
+			reset_thrust()
 			sfx(1)
 			game="over-bad"
 		elseif(ship.alive==1
 		 and game=="started"
 		 and on_pad()) then
 		 --we landed, but not on the pad
+			reset_thrust()
 			sfx(2)
 			game="over-good"
 		elseif(ship.alive==1
 			and game=="started"
 			and not on_pad()) then
+			reset_thrust()
 		 sfx(2)
 		 game="over-okay"
 		end
@@ -242,18 +244,24 @@ function move_ship()
 	
 	if(ship.x>=start_x) then
 		--update camera position
-		cam.x = -start_x+ship.x
+		cam.x=-start_x+ship.x
 	end
 	return ship
+end
+
+function reset_thrust()
+	ship.left_sprite=19
+	ship.right_sprite=19
+	ship.up_sprite=3
 end
 
 function above_ground()
  if(ship.x<cam.x) then
   --ship is off screen
-  if(flr(ship.y)+ship.height > 110) then
+  if(flr(ship.y)+ship.height>110) then
   	return false
   end
- elseif(#death_points > 1 and
+ elseif(#death_points>1 and
 		flr(ship.x+ship.width)<=#death_points) then
 		for x=flr(ship.x),flr(ship.x)+ship.width do
 			if(x>0) then
@@ -286,14 +294,16 @@ end
 --draws
 
 function draw_ship()
-	if(ship.alive == 0) then
-		if(ship.sprite == 18) then
-			ship.sprite = 17
+	--ship crashed, burn
+	if(ship.alive==0) then
+		if(ship.sprite==18) then
+			ship.sprite=17
 		else 
-			ship.sprite = 18
+			ship.sprite=18
 		end
 	end
 	
+	--chase the damn thing
 	camera(cam.x)
 
 	--ship
@@ -354,9 +364,13 @@ function draw_ground()
 end
 
 function draw_pad()
-	
- spr(pad.sprite,pad.x,pad.y,
- 	2,2)
+ if(flr(frame/8)%2==0) then
+ 	spr(pad.sprite,pad.x,pad.y,
+ 		2,2)
+ else
+ 	spr(pad.sprite+2,pad.x,pad.y,
+ 		2,2)
+ end
 end
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -368,13 +382,13 @@ __gfx__
 00000000565665650d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000666556660d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000a00000000000000000000000000000000000000000000000000000000000000000000700000000000000800000000000000000000000000000000
-0000000000a90000000a00000000000090000000a0000000000000090000000ad00000000000000dd00000000000000d00000000000000000000000000000000
-00000000009a600000a9600000000000a90000009a0000000000009a000000a9dd000000000000dddd000000000000dd00000000000000000000000000000000
-000000000066060000660600000000009a000000a9000000000000a90000009addddadddddd9dddddddd9ddddddadddd00000000000000000000000000000000
-00000000060666000606660000000000a0000000900000000000000a00000009dd500056650005dddd500056650005dd00000000000000000000000000000000
-000000000a6ccc90096ccca00000000000000000000000000000000000000000dd05050dd05050dddd05050dd05050dd00000000000000000000000000000000
-0000000095c6555aa5c655590000000000000000000000000000000000000000dd005006600500dddd005006600500dd00000000000000000000000000000000
+00000000000a00000000000000000000000000000000000000000000000000000000000000000000b00000000000000800000000000000000000000000000000
+0000000000a90000000a00000000000090000000a0000000000000090000000a5000000000000005500000000000000500000000000000000000000000000000
+00000000009a600000a9600000000000a90000009a0000000000009a000000a96500000000000056650000000000005600000000000000000000000000000000
+000000000066060000660600000000009a000000a9000000000000a90000009a65aaaaa559999956659999955aaaaa5600000000000000000000000000000000
+00000000060666000606660000000000a0000000900000000000000a000000096550005665000556655000566500055600000000000000000000000000000000
+000000000a6ccc90096ccca000000000000000000000000000000000000000006505050550505056650505055050505600000000000000000000000000000000
+0000000095c6555aa5c6555900000000000000000000000000000000000000006500500660050056650050066005005600000000000000000000000000000000
 __sfx__
 01010000025500c5500355012550025500f5500655000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0105000000000276200962007610286100861006610026300160006600066001a5001a5001a5001a5001a5001a5001a5000060000600006000060000600016000260000600000000000000000000000000000000
