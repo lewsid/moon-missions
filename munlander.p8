@@ -71,6 +71,15 @@ end
 -->8
 --inits
 
+function init_levels()
+	levels[1]=
+	{
+		pad_x=120,
+		pad_y=124
+	}
+	end
+end
+
 function init_pad(base_x,base_y)
 	pad=
 	{
