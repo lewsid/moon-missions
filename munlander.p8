@@ -1,14 +1,12 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.7
+-- mun lander alpha.0.71
 -- by lewsidboi, 2020
 
 --game parameters
 start_fuel=100
 base_ground=110
-frame=0
-seconds=0
 gravity=.02
 thrust=.15
 start_x=58
@@ -18,21 +16,22 @@ game="intro"
 level=1
 
 --tables
+global={frames=0,seconds=0}
 ship={}
+levels={}
 death_points={}
 ground_lines={}
-cam={}
+cam={x=0}
 stars={}
 pad={}
+pickup={sprite=35,frames=8,frame=1}
+pickups={}
 intro={moon_y=100}
 flag={sprite=2,drop_sprite=7}
 banner={intro=12,subhead=13,start,good=11,bad=8,left=0,right=128}
 
 function _init()
-	init_ship(start_x,start_y,0,.2)
- init_pad(128,80)
- init_ground()
- init_stars()
+	init_levels()
 end
 
 function _draw()
@@ -42,26 +41,29 @@ function _draw()
 		draw_pad()
 		draw_ground()
 		draw_ship()
+		draw_pickups()
 	end	
 	
 	--stars forever
 	foreach(stars, draw_star)
 	
- draw_ui()
+	draw_ui()
 end
 
 function _update()
 	--clock upkeep
-	seconds=frame/30
-	frame=frame+1
+	global.seconds=global.frames/30
+	global.frames+=1
 
 	if(game=="intro") then
 		if(btn(❎)) then
 			game="levelintro"
+			init_ship(start_x,start_y,0,.2)
+			init_stars()
+			init_pad()
+			init_ground()
+			init_pickups()
 		end
-	elseif(gmae=="levelintro") then
-		init_ground()
- 	init_stars()
 	elseif(game=="started") then
 		control_ship()
 		move_ship()
@@ -75,21 +77,35 @@ function init_levels()
 	levels[1]=
 	{
 		pad_x=120,
-		pad_y=124
+		pad_y=90,
+		pickups=1
 	}
-	end
 end
 
-function init_pad(base_x,base_y)
+function init_pad()
 	pad=
 	{
 		sprite=8,
 		width=16,
 		height=16,
 		surface=12,
-		x=rnd(128)+base_x,
-		y=rnd(10)+base_y,
+		x=levels[level].pad_x,
+		y=levels[level].pad_y
 	}
+end
+
+function init_pickups()
+	if(levels[level].pickups>0) then
+		for i=0,levels[level].pickups do
+			pickups[i]= {
+				sprite=pickup.sprite,
+				frame=pickup.frame,
+				frames=pickup.frames,
+				x=rnd(124),
+				y=10+rnd(100)
+			}
+		end
+	end
 end
 
 function init_ship()
@@ -114,8 +130,6 @@ function init_ship()
 		fuel=start_fuel,
 		alive=1
 	}
-	
-	cam={x=0}
 
 	return ship
 end
@@ -135,15 +149,15 @@ function init_ground()
 		--check for the pad
 		if(new_edge>=pad.x-8 and
 		 new_edge<=pad.x+pad.width) then
-	 	new_edge=pad.x
-	 	new_top=pad.y+pad.height
-	 	add(ground_lines,{x=pad.x,
+	 		new_edge=pad.x
+	 		new_top=pad.y+pad.height
+	 		add(ground_lines,{x=pad.x,
 				y=new_top })
 			add(ground_lines,{x=pad.x+pad.width,
 				y=new_top })
 			last_edge=pad.x+pad.height
-	 else
-	 	--go nuts
+	 	else
+	 		--go nuts
 			add(ground_lines,{x=new_edge,
 				y=new_top })
 			last_edge=new_edge
@@ -152,19 +166,19 @@ function init_ground()
 end
 
 function init_stars()
-  screen=flr(cam.x/128)
-  if(#stars<60*screen+1) then
-  	for i=1,60 do
-  	 --place stars up to one 
-  	 --screen away so we don't 
-  	 --see them spawn in
-				star={
-					x=rnd(screen+1*256)+screen*256,
-					y=rnd(base_ground)
-				}
-		 	add(stars,star)
-			end
-	 end
+	screen=flr(cam.x/128)
+	if(#stars<60*screen+1) then
+		for i=1,60 do
+		  	--place stars up to one 
+		  	--screen away so we don't 
+		  	--see them spawn in
+		  	star={
+		  		x=rnd(screen+1*256)+screen*256,
+		  		y=rnd(base_ground)
+		  	}
+		  	add(stars,star)
+		end
+	end
 end
 
 -->8
@@ -181,7 +195,8 @@ function control_ship()
 			ship.dx -= thrust
 			ship.fuel -= 1
 			sfx(0)
-			if (ship.right_sprite==19 or ship.right_sprite == 22) then 
+			if (ship.right_sprite==19 
+				or ship.right_sprite==22) then 
 				ship.right_sprite=23
 			else
 				ship.right_sprite=22
@@ -241,18 +256,18 @@ function move_ship()
 			sfx(1)
 			game="over-bad"
 		elseif(ship.alive==1
-		 and game=="started"
-		 and on_pad()) then
-		 --we landed, but not on the pad
+			and game=="started"
+			and on_pad()) then
 			reset_thrust()
 			sfx(2)
-			game="over-good"
+			game="over-bad"
 		elseif(ship.alive==1
 			and game=="started"
 			and not on_pad()) then
+			--we landed, but not on the pad
 			reset_thrust()
-		 sfx(2)
-		 game="over-bad"
+			sfx(2)
+			game="over-bad"
 		end
 	end
 	
@@ -270,12 +285,12 @@ function reset_thrust()
 end
 
 function above_ground()
- if(ship.x<cam.x) then
-  --ship is off screen
-  if(flr(ship.y)+ship.height>base_ground) then
-  	return false
-  end
- elseif(#death_points>1 and
+	if(ship.x<cam.x) then
+		--ship is off screen
+		if(flr(ship.y)+ship.height>base_ground) then
+			return false
+		end
+	elseif(#death_points>1 and
 		flr(ship.x+ship.width)<=#death_points) then
 		for x=flr(ship.x),flr(ship.x)+ship.width do
 			if(x>0) then
@@ -298,7 +313,7 @@ end
 function on_pad()
 	if(ship.x>=pad.x and
 		ship.x<=pad.x+pad.width
-		and flr(ship.y)>=pad.y+3)
+		and flr(ship.y)>=pad.y+4)
 		then
 		return true
 	end
@@ -308,7 +323,7 @@ end
 --draws
 
 function draw_ui()
- if(game=="intro") then
+	if(game=="intro") then
 		draw_intro()
 	elseif(game=="levelintro") then
 		cls(1)
@@ -320,15 +335,15 @@ function draw_ui()
 			game="started"
 		end
 	else
-	 draw_game()
+		draw_game()
 	end
 end
 
 function draw_intro()
- spr(64,0,intro.moon_y,16,9)
+	spr(64,0,intro.moon_y,16,9)
  
- if(intro.moon_y>70) then
- 	intro.moon_y-=1
+	if(intro.moon_y>70) then
+ 		intro.moon_y-=1
 	else
 		draw_banner(banner.intro,
 			"mun lander",43,-30)
@@ -338,32 +353,32 @@ function draw_intro()
 			"ver.a.0.6, 2020",33,64)
 		draw_banner(banner.start,
 		 "press ❎ to start",31,-5)
- end 
+	end 
 end
 
 function draw_game()
- --status
+	--status
 	print("fuel: "..ship.fuel,
 		cam.x+1,1,1)
 	print("fuel: "..ship.fuel,
 		cam.x,0,7)
-	print("distance: "..flr(pad.x-ship.x+3).."m",
+	print("distance: "..flr(pad.x-ship.x+4).."m",
 		cam.x+1,8,1)
-	print("distance: "..flr(pad.x-ship.x+3).."m",
+	print("distance: "..flr(pad.x-ship.x+4).."m",
 		cam.x,7,7)
 
 	--handle endgame state
 	if(game=="over-good") then
- 	draw_banner(banner.good,
+ 		draw_banner(banner.good,
 			"mission accomplished",25)
 	elseif(game=="over-bad" or
 		game=="over-okay") then	
 		draw_banner(banner.bad,
 			"mission failed",35)
- elseif(game=="intro") then
- 	draw_banner(banner.intro,
+	elseif(game=="intro") then
+ 		draw_banner(banner.intro,
 			"mun lander",35)
- end
+	end
 end
 
 function draw_ship()
@@ -391,10 +406,10 @@ function draw_ship()
 
 	--raise flag
 	if(game=="over-good") then
-	 spr(flag.drop_sprite,ship.x+2,ship.y-7)
-	 spr(flag.drop_sprite,ship.x+4,ship.y-7)
- 	spr(flag.sprite,ship.x+3,ship.y-7)
- end
+		spr(flag.drop_sprite,ship.x+2,ship.y-7)
+		spr(flag.drop_sprite,ship.x+4,ship.y-7)
+		spr(flag.sprite,ship.x+3,ship.y-7)
+	end
 end
 
 function draw_star(star)
@@ -404,18 +419,35 @@ function draw_star(star)
 	end
 end
 
+function draw_pickups()
+	if(#pickups>0) then
+		for i=0,#pickups do
+			if(global.frames%2==0) then
+				pickups[i].frame+=1
+				if(pickups[i].frame == pickups[i].frames) then
+					--reset frame
+					pickups[i].frame=1
+				end
+			end
+
+			spr(pickups[i].sprite+pickups[i].frame-1,pickups[i].x,pickups[i].y)
+			
+		end
+	end
+end
+
 function draw_ground()
 	for i=1,#ground_lines-1 do
-	 if(ground_lines[i+1].x>=flr(cam.x)-10
-	  and ground_lines[i+1].x<cam.x+256) then
-		 --fill lines
-		 for j=0,base_ground-pad.y+1 do
-			 line(ground_lines[i].x,
-			  ground_lines[i].y+j,
-			  ground_lines[i+1].x,
-			  ground_lines[i+1].y+j,7)
-		 end
-	 end
+		if(ground_lines[i+1].x>=flr(cam.x)-10
+			and ground_lines[i+1].x<cam.x+256) then
+			--fill lines
+			for j=0,base_ground-pad.y+1 do
+				line(ground_lines[i].x,
+				ground_lines[i].y+j,
+				ground_lines[i+1].x,
+				ground_lines[i+1].y+j,7)
+			end
+		end
 	end	
 	
 	--search for and store 
@@ -440,34 +472,34 @@ function draw_ground()
 end
 
 function draw_pad()
- if(flr(frame/8)%2==0) then
- 	spr(pad.sprite,pad.x,pad.y,
- 		2,2)
- else
- 	spr(pad.sprite+2,pad.x,pad.y,
- 		2,2)
- end
+	if(flr(global.frames/8)%2==0) then
+		spr(pad.sprite,pad.x,pad.y,2,2)
+	else
+ 		spr(pad.sprite+2,pad.x,pad.y,2,2)
+	end
 end
 
-function draw_banner(which,
-	message,offset_x,offset_y)
+function draw_banner(which,message,offset_x,offset_y)
 	if(offset_y==nil) offset_y=0
- if(banner.left<128) then
- 	banner.left+=10
- end
- if(banner.right>0) then
- 	banner.right-=10
- end
+	
+	if(banner.left<128) then
+ 		banner.left+=10
+ 	end
+ 	
+ 	if(banner.right>0) then
+ 		banner.right-=10
+ 	end
+	
 	rectfill(cam.x,50+offset_y,
-  cam.x+banner.left,55+offset_y,which)
- rectfill(cam.x+128,55+offset_y,
- 	cam.x+banner.right,60+offset_y,which)
+		cam.x+banner.left,55+offset_y,which)
+ 	rectfill(cam.x+128,55+offset_y,
+		cam.x+banner.right,60+offset_y,which)
 	
 	if(banner.left>=128) then
 		print(message,cam.x+offset_x+1,
 			54+offset_y,1)
- 	print(message,cam.x+offset_x,
- 		53+offset_y,7)
+ 		print(message,cam.x+offset_x,
+ 			53+offset_y,7)
 	end
 end
 -->8
@@ -480,11 +512,11 @@ function reset_timer()
 end
 
 function start_timer()
- if(timer.start==0) timer.start=seconds
+ if(timer.start==0) timer.start=global.seconds
 end
 
 function get_seconds()
-	timer.seconds=seconds-timer.start
+	timer.seconds=global.seconds-timer.start
 	return timer.seconds
 end
 __gfx__
@@ -499,19 +531,19 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000a00000000000000000000000000000000000000000000000000000000000000000000b00000000000000800000000000000000000000000000000
 0000000000a90000000a00000000000090000000a0000000000000090000000a5000000000000005500000000000000500000000000000000000000000000000
-00000000009a600000a9600000000000a90000009a0000000000009a000000a96500000000000056650000000000005600000000000000000000000000000000
-000000000066060000660600000000009a000000a9000000000000a90000009a65aaaaaa9999995665999999aaaaaa5600000000000000000000000000000000
-00000000060666000606660000000000a0000000900000000000000a000000096550005665000556655000566500055600000000000000000000000000000000
-000000000a6ccc90096ccca000000000000000000000000000000000000000006505050550505056650505055050505600000000000000000000000000000000
-0000000095c6555aa5c6555900000000000000000000000000000000000000006500500660050056650050066005005600000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000009a600000a9600000000000a90000009a0000000000009a000000a95500000000000055550000000000005500000000000000000000000000000000
+000000000066060000660600000000009a000000a9000000000000a90000009a55aaaaaa9999995555999999aaaaaa5500000000000000000000000000000000
+00000000060666000606660000000000a0000000900000000000000a000000095550005665000555555000566500055500000000000000000000000000000000
+000000000a6ccc90096ccca000000000000000000000000000000000000000005505050550505055550505055050505500000000000000000000000000000000
+0000000095c6555aa5c6555900000000000000000000000000000000000000005500500660050055550050066005005500000000000000000000000000000000
+00000000006665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000666500000c7c00007c00000067000000c6000000cc000000cc000000cc000000cc000000cc00000000000000000000000000000000000000000000
+00000000066cc6500007c6000061c00000c1c00000c1700000c1600000c1c00000c1c00000c1c0000071c0000000000000000000000000000000000000000000
+0000000066cccc65000c6c0000c1c10000c1c10000c1c10000c1710000c1610000c1c1000071c1000061c1000000000000000000000000000000000000000000
+0000000066cccc650000000000cc110000cc110000cc110000cc110000c7110000761100006c1100007c11000000000000000000000000000000000000000000
+00000000066666500000000000011000000110000001100000011000000110000001100000011000000110000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
