@@ -1,0 +1,4 @@
+- [ ] Add a pickup of some kind (science)
+- [ ] Add pre-level tips
+- [ ] Add scoring system
+- [ ] Add high score table
