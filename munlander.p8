@@ -55,8 +55,10 @@ function _update()
 	global.seconds=global.frames/30
 	global.frames+=1
 
+	init_stars()
+
 	if(game=="intro") then
-	 init_stars()
+	 
 		if(btn(❎)) then
 			game="levelintro"
 			init_ship(start_x,start_y,0,.2)
@@ -65,6 +67,7 @@ function _update()
 			init_pickups()
 		end
 	elseif(game=="started") then
+		init_ground()
 		control_ship()
 		move_ship()
 		check_end()
@@ -169,6 +172,12 @@ end
 
 function init_stars()
 	screen=flr(cam.x/128)
+	
+	--come back and optimize
+	--if(#stars>400) then
+	-- del(stars,stars[1])
+	--end
+	
 	if(#stars<60*screen+1) then
 		for i=1,60 do
 		  	--place stars up to one 
@@ -368,6 +377,9 @@ function draw_game()
 		cam.x+1,8,1)
 	print("distance: "..ceil(pad.x-ship.x+4).."m",
 		cam.x,7,7)
+		
+	print("stars: "..#stars,
+		cam.x,14,7)
 
 	--handle endgame state
 	if(game=="over-good") then
@@ -416,9 +428,14 @@ function draw_ship()
 end
 
 function draw_star(star)
-	--draw star if nothing else is there
-	if(pget(star.x,star.y)!=7) then
-		pset(star.x,star.y,6)
+ --only draw stars on screen
+	if(star.x>=cam.x and 
+		star.x<= cam.x+128) then
+		--check for terrain and draw
+		if(pget(star.x,star.y)!=7 and
+	 	pget(star.x,star.y)!=6) then
+			pset(star.x,star.y,6)
+		end
 	end
 end
 
