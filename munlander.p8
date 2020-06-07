@@ -4,7 +4,7 @@ __lua__
 -- mun lander alpha.0.8
 -- by lewsidboi, 2020
 
-version="a.0.75"
+version="a.0.8"
 
 --game parameters
 start_fuel=100
@@ -256,11 +256,12 @@ end
 
 function detect_pickup()
 	for i=1,#pickups do
-		if(collide(ship,pickups[i]) and
-		 pickups[i].is_active) then
-		 collected+=1
-		 pickups[i].is_active=false
-		 sfx(3)
+	 if(pickups[i].is_active) then
+			if(collide(ship,pickups[i])) then
+		 	collected+=1
+		 	pickups[i].is_active=false
+		 	sfx(3)
+		 end
 		end
 	end
 end
