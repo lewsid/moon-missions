@@ -41,6 +41,9 @@ end
 
 function _draw()
 	cls()
+	
+	--stars forever
+	foreach(stars, draw_star)
 
 	if(game!="intro") then
 	 draw_ship()
@@ -48,9 +51,6 @@ function _draw()
 		draw_ground()		
 		draw_pickups()
 	end	
-	
-	--stars forever
-	foreach(stars, draw_star)
 	
 	draw_ui()
 end
@@ -78,6 +78,7 @@ function _update()
 		
 		control_ship()
 		move_ship()
+		detect_pickup()
 		--check_end()
 	end
 end
@@ -265,14 +266,12 @@ function detect_pickup()
 	end
 end
 
-function move_ship()
-	if(game=="started") then
-		ship.x+=ship.dx
-	end
-		
+function move_ship()		
 	--if the ship is above ground,
 	--move it
-	if(above_ground()) then
+	if(above_ground() and not
+	 on_pad()) then
+	 ship.x+=ship.dx
 		ship.dy+=gravity
 		ship.y+=ship.dy
 	else
@@ -399,7 +398,7 @@ function draw_game()
 		cam.x+1,8,1)
 	print("distance: "..ceil(pad.x-ship.x+4).."m",
 		cam.x,7,7)
-		
+	
 	--data icon
  percent=collected/#pickups*100
 	step=0
