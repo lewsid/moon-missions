@@ -79,7 +79,6 @@ function _update()
 		control_ship()
 		move_ship()
 		detect_pickup()
-		--check_end()
 	end
 end
 -->8
@@ -88,10 +87,17 @@ end
 function init_levels()
 	levels[1]=
 	{
-		pad_x=120,
+		pad_x=130,
 		pad_y=90,
 		pickups=4,
 		jag_rate=25
+	}
+	levels[2]=
+	{
+		pad_x=150,
+		pad_y=95,
+		pickups=4,
+		jag_rate=22
 	}
 end
 
@@ -109,12 +115,17 @@ end
 
 function init_pickups()
 	if(levels[level].pickups>0) then
+		--set the base x position
+		spawn_x=flr((pad.x)/levels[level].pickups)
+		
+		--we spawn pickups at random
+		--intervals but not overlapping
 		for i=1,levels[level].pickups do
 			pickups[i]= {
 				sprite=pickup.sprite,
 				frame=pickup.frame,
 				frames=pickup.frames,
-				x=rnd(pad.x),
+				x=rnd(spawn_x)+((i*spawn_x)-1),
 				y=10+rnd(80),
 				width=pickup.width,
 				height=pickup.height,
@@ -338,10 +349,6 @@ function above_ground()
 	return true
 end
 
-function check_end()
-	
-end
-
 function on_pad()
 	if(ship.x>=pad.x and
 		ship.x<=pad.x+pad.width
@@ -521,7 +528,7 @@ function draw_ground()
 	end
 	
 	--draw the lowest line (fills in gaps)
-	line(0,127,ship.x+127,127,7)
+	line(0,127,cam.x+127,127,7)
 end
 
 function draw_pad()
