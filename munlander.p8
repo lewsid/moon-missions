@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.81
+-- mun lander alpha.0.82
 -- by lewsidboi, 2020
 
-version="a.0.81"
+version="a.0.82"
 
 --game parameters
 start_fuel=100
@@ -14,7 +14,7 @@ thrust=.15
 start_x=58
 start_y=10
 last_edge=0
-game="intro"
+game_state="intro"
 level=1
 collected=0
 max_x=5000
@@ -33,7 +33,7 @@ pickup={height=5,width=4,sprite=35,frames=8,frame=1}
 pickups={}
 intro={moon_y=100}
 flag={sprite=2,drop_sprite=7}
-banner={intro=12,subhead=13,start,good=11,bad=8,left=0,right=128}
+banner={intro=12,subhead=1,start,good=11,bad=8,left=0,right=128}
 
 function _init()
 	init_levels()
@@ -45,14 +45,14 @@ function _draw()
 	--stars forever
 	foreach(stars, draw_star)
 
-	if(game!="intro") then
+	if(game_state!="intro") then
 	 draw_ship()
 		draw_pad()
 		draw_ground()		
 		draw_pickups()
 	end	
 	
-	draw_ui()
+	draw_start()
 end
 
 function _update()
@@ -62,16 +62,16 @@ function _update()
 
 	init_stars()
 
-	if(game=="intro") then
+	if(game_state=="intro") then
 		if(btn(❎)) then
-			game="levelintro"
+			game_state="levelintro"
 			init_ship(start_x,start_y,0,.2)
 			init_pad()
 			init_ground()
 			init_pickups()
 			collected=0
 		end
-	elseif(game=="started") then
+	elseif(game_state=="started") then
 		if(ship.on_screen) then
 			init_ground()
 		end
@@ -84,6 +84,7 @@ end
 -->8
 --inits
 
+--level config
 function init_levels()
 	levels[1]=
 	{
@@ -101,6 +102,7 @@ function init_levels()
 	}
 end
 
+--set up the landing pad 
 function init_pad()
 	pad=
 	{
@@ -113,6 +115,7 @@ function init_pad()
 	}
 end
 
+--generate pickups for our level
 function init_pickups()
 	if(levels[level].pickups>0) then
 		--set the base x position
@@ -135,7 +138,10 @@ function init_pickups()
 	end
 end
 
+--set up our ship with some
+--basic settings
 function init_ship()
+
 	--up_sprite: 3 = off, 4 = on, 5 = on-alt
 	--left_sprite: 19 = off, 20 = on, 21 = on-alt
 	--right_sprite: 19 = off, 22 = on, 23 = on-alt
@@ -162,6 +168,7 @@ function init_ship()
 	return ship
 end
 
+--procedurally generate terrain
 function init_ground()
 	distance=128
 	distance+=cam.x+128
@@ -175,18 +182,19 @@ function init_ground()
 		end
 		
 		--check for the pad
+		--and draw around it
 		if(new_edge>=pad.x and
-		 new_edge<=pad.x+levels[level].jag_rate) then
-	 	new_edge=pad.x
-	 	new_top=pad.y+pad.height
-	 	add(ground_lines,{x=pad.x-1,
+			new_edge<=pad.x+levels[level].jag_rate) then
+	 		new_edge=pad.x
+	 		new_top=pad.y+pad.height
+	 		add(ground_lines,{x=pad.x-1,
 				y=new_top })
 			add(ground_lines,
 				{x=pad.x+pad.width,
 				y=new_top })
 			last_edge=pad.x+pad.height
-	 else
-	 	--go nuts
+	 	else
+	 		--go nuts
 			add(ground_lines,{x=new_edge,
 				y=new_top })
 			last_edge=new_edge
@@ -194,6 +202,8 @@ function init_ground()
 	end
 end
 
+--initialize stars, two screens
+--worth at a time
 function init_stars()
 	screen=flr(cam.x/128)
 	
@@ -214,6 +224,8 @@ end
 -->8
 --updates
 
+--update ship trajectory based
+--on user input
 function control_ship()
 	ship.speed=flr((ship.dy*100)/5)
 
@@ -265,48 +277,52 @@ function control_ship()
 	end
 end
 
+--detect if ship has collided 
+--with/collected a pickup
 function detect_pickup()
 	for i=1,#pickups do
-	 if(pickups[i].is_active) then
+		if(pickups[i].is_active) then
 			if(collide(ship,pickups[i])) then
-		 	collected+=1
-		 	pickups[i].is_active=false
-		 	sfx(3)
-		 end
+			 	collected+=1
+			 	pickups[i].is_active=false
+			 	sfx(3)
+			end
 		end
 	end
 end
 
+--update ship position
 function move_ship()		
-	--if the ship is above ground,
-	--move it
+	--if ship is above ground 
+	--and not on the pad, move it
 	if(above_ground() and not
 	 on_pad()) then
 	 ship.x+=ship.dx
 		ship.dy+=gravity
 		ship.y+=ship.dy
 	else
-		--we are coming in too hot
 		if(ship.speed>10 
 			and ship.alive==1) then
+			--we are coming in too hot
 			ship.alive=0
 			ship.sprite=18
 			reset_thrust()
 			sfx(1)
-			game="over-bad"
+			game_state="over-bad"
 		elseif(ship.alive==1
-			and game=="started"
+			and game_state=="started"
 			and on_pad()) then
+			--ship landed smoothly on the pad
 			reset_thrust()
 			sfx(2)
-			game="over-good"
+			game_state="over-good"
 		elseif(ship.alive==1
 			and game=="started"
 			and not on_pad()) then
 			--we landed, but not on the pad
 			reset_thrust()
 			sfx(2)
-			game="over-bad"
+			game_state="over-bad"
 		end
 	end
 	
@@ -320,12 +336,15 @@ function move_ship()
 	end
 end
 
+--reset ship thrust to off state
 function reset_thrust()
 	ship.left_sprite=19
 	ship.right_sprite=19
 	ship.up_sprite=3
 end
 
+--true if ship is above ground
+--false otherwise
 function above_ground()
 	if(ship.x<cam.x or 
 	 ship.x>cam.x+128) then
@@ -349,6 +368,8 @@ function above_ground()
 	return true
 end
 
+--true if ship is on landing pad,
+--false otherwise
 function on_pad()
 	if(ship.x>=pad.x and
 		ship.x<=pad.x+pad.width
@@ -361,26 +382,29 @@ end
 -->8
 --draws
 
-function draw_ui()
-	if(game=="intro") then
+--handle initial draw state
+function draw_start()
+	if(game_state=="intro") then
 		draw_intro()
-	elseif(game=="levelintro") then
+	elseif(game_state=="levelintro") then
 		cls(1)
 		draw_banner(banner.intro,
 			"level "..level,48,5)
 		start_timer()	
 		
 		if(get_seconds()==2) then	
-			game="started"
+			game_state="started"
 		end
 	else
 		draw_game()
 	end
 end
 
+--draw game intro
 function draw_intro()
 	spr(64,0,intro.moon_y,16,9)
  
+ 	--animate moon
 	if(intro.moon_y>70) then
  		intro.moon_y-=1
 	else
@@ -395,6 +419,7 @@ function draw_intro()
 	end 
 end
 
+--draw in-progress game stuff
 function draw_game()
 	--status
 	print("fuel: "..ship.fuel,
@@ -407,7 +432,7 @@ function draw_game()
 		cam.x,7,7)
 	
 	--data icon
- percent=collected/#pickups*100
+ 	percent=collected/#pickups*100
 	step=0
 	if(percent==100) then
 		step=3
@@ -421,19 +446,25 @@ function draw_game()
 	spr(49+step,cam.x+119,1)
 
 	--handle endgame state
-	if(game=="over-good") then
- 		draw_banner(banner.good,
-			"mission accomplished",25)
-	elseif(game=="over-bad" or
-		game=="over-okay") then	
-		draw_banner(banner.bad,
-			"mission failed",35)
-	elseif(game=="intro") then
- 		draw_banner(banner.intro,
-			"mun lander",35)
-	end
+	draw_end()
 end
 
+--draw end game state
+function draw_end()
+	if(game_state=="over-good") then
+ 		draw_banner(banner.good,
+			"mission accomplished",25)
+	elseif(game_state=="over-bad" or
+		game_state=="over-okay") then	
+		draw_banner(banner.bad,
+			"mission failed",35)
+	elseif(game_state=="intro") then
+ 		draw_banner(banner.intro,
+			"mun lander",35)
+ 	end
+end
+
+--draw our wee spaceship
 function draw_ship()
 	--ship crashed, burn
 	if(ship.alive==0) then
@@ -459,15 +490,16 @@ function draw_ship()
 	spr(ship.right_sprite,ship.x+2,ship.y)
 
 	--raise flag
-	if(game=="over-good") then
+	if(game_state=="over-good") then
 		spr(flag.drop_sprite,ship.x+2,ship.y-7)
 		spr(flag.drop_sprite,ship.x+4,ship.y-7)
 		spr(flag.sprite,ship.x+3,ship.y-7)
 	end
 end
 
+--twinkle twinkle
 function draw_star(star)
- --only draw stars on screen
+ 	--only draw stars on screen
 	if(star.x>=cam.x and 
 		star.x<= cam.x+128) then
 		--check for terrain and draw
@@ -478,10 +510,12 @@ function draw_star(star)
 	end
 end
 
+--draw data pickups
 function draw_pickups()
 	if(#pickups>0) then
 		for i=1,#pickups do
-		 if(pickups[i].is_active) then
+			if(pickups[i].is_active) then
+				--animate trace effect
 				if(global.frames%2==0) then
 					pickups[i].frame+=1
 					if(pickups[i].frame == pickups[i].frames) then
@@ -490,12 +524,14 @@ function draw_pickups()
 					end
 				end
 
-				spr(pickups[i].sprite+pickups[i].frame-1,pickups[i].x,pickups[i].y)
+				spr(pickups[i].sprite+pickups[i].frame-1,
+					pickups[i].x,pickups[i].y)
 			end
 		end
 	end
 end
 
+--draw the moonscape
 function draw_ground()
 	for i=1,#ground_lines-1 do
 		if(ground_lines[i+1].x>=flr(cam.x)-10
@@ -531,6 +567,7 @@ function draw_ground()
 	line(0,127,cam.x+127,127,7)
 end
 
+--draw landing pad
 function draw_pad()
 	if(flr(global.frames/8)%2==0) then
 		spr(pad.sprite,
@@ -541,7 +578,8 @@ function draw_pad()
 	end
 end
 
-function draw_banner(which,message,offset_x,offset_y)
+--animate banner message
+function draw_banner(color,message,offset_x,offset_y)
 	if(offset_y==nil) offset_y=0
 	
 	if(banner.left<128) then
@@ -553,9 +591,9 @@ function draw_banner(which,message,offset_x,offset_y)
  	end
 	
 	rectfill(cam.x,50+offset_y,
-		cam.x+banner.left,55+offset_y,which)
+		cam.x+banner.left,55+offset_y,color)
  	rectfill(cam.x+128,55+offset_y,
-		cam.x+banner.right,60+offset_y,which)
+		cam.x+banner.right,60+offset_y,color)
 	
 	if(banner.left>=128) then
 		print(message,cam.x+offset_x+1,
@@ -569,14 +607,18 @@ end
 
 timer={start=0,seconds=0}
 
+--reset timer to zero
 function reset_timer()
 	timer.start=0
 end
 
+--start the clock
 function start_timer()
  if(timer.start==0) timer.start=global.seconds
 end
 
+--get the elapsed number of
+--seconds since timer start
 function get_seconds()
 	timer.seconds=global.seconds-timer.start
 	return timer.seconds
@@ -588,6 +630,8 @@ function intersect(min1,max1,
   and min(min1,max1)<max(min2,max2)
 end
 
+--return true if object1 has 
+--collided with object2
 function collide(object1,object2)
 	return intersect(object1.x,
 		object1.x+object1.width,
@@ -606,7 +650,7 @@ __gfx__
 00000000565665651d10000000000000000000000000000011111111010000000000000000000000000000000000000000000000000000000000000000000000
 000000006d6556d61d10000000000000000000000000000011111111010000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000a00000000000000000000000000000000000000000000000000000000000000000000b00000000000000800000000000000000000000000000000
+00000000000a0000000000000000000000000000000000000000000000000000900000000000000aa00000000000000900000000000000000000000000000000
 0000000000a95000000a50000000000090000000a0000000000000090000000a5000000000000005500000000000000500000000000000000000000000000000
 00000000009a650000a9650000000000a90000009a0000000000009a000000a95500000000000055550000000000005500000000000000000000000000000000
 000000000566d6000566d600000000009a000000a9000000000000a90000009a55aaaaaa9999995555999999aaaaaa5500000000000000000000000000000000
