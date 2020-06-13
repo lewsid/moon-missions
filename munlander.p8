@@ -1,28 +1,28 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.82
+-- mun lander alpha.0.83
 -- by lewsidboi, 2020
 
-version="a.0.82"
+version="a.0.83"
 
 --game parameters
-start_fuel=100
-base_ground=110
-gravity=.02
-thrust=.15
-start_x=58
-start_y=10
-last_edge=0
-game_state="intro"
-level=1
-collected=0
-max_x=5000
+config={
+	start_fuel=100,
+	base_ground=110,
+	gravity=.02,
+	thrust=.15,
+	start_x=58,
+	start_y=10,
+	last_edge=0,
+	game_state="gameintro",
+	level=1,
+	collected=0,
+	max_x=5000
+}
 
---tables
-global={frames=0,seconds=0}
+upkeep={frames=0,seconds=0}
 ship={}
-data_collected=0
 levels={}
 death_points={}
 ground_lines={}
@@ -41,44 +41,21 @@ end
 
 function _draw()
 	cls()
-	
-	--stars forever
-	foreach(stars, draw_star)
-
-	if(game_state!="intro") then
-	 draw_ship()
-		draw_pad()
-		draw_ground()		
-		draw_pickups()
-	end	
-	
 	draw_start()
 end
 
 function _update()
 	--clock upkeep
-	global.seconds=global.frames/30
-	global.frames+=1
+	upkeep.seconds=upkeep.frames/30
+	upkeep.frames+=1
 
-	init_stars()
-
-	if(game_state=="intro") then
+	if(config.game_state=="gameintro") then
+		init_stars()
 		if(btn(❎)) then
-			game_state="levelintro"
-			init_ship(start_x,start_y,0,.2)
-			init_pad()
-			init_ground()
-			init_pickups()
-			collected=0
+			init_level()
 		end
-	elseif(game_state=="started") then
-		if(ship.on_screen) then
-			init_ground()
-		end
-		
-		control_ship()
-		move_ship()
-		detect_pickup()
+	elseif(config.game_state=="started") then
+		handle_gameplay()
 	end
 end
 -->8
@@ -110,20 +87,20 @@ function init_pad()
 		width=16,
 		height=16,
 		surface=12,
-		x=levels[level].pad_x,
-		y=levels[level].pad_y
+		x=levels[config.level].pad_x,
+		y=levels[config.level].pad_y
 	}
 end
 
 --generate pickups for our level
 function init_pickups()
-	if(levels[level].pickups>0) then
+	if(levels[config.level].pickups>0) then
 		--set the base x position
-		spawn_x=flr((pad.x)/levels[level].pickups)
+		spawn_x=flr((pad.x)/levels[config.level].pickups)
 		
 		--we spawn pickups at random
 		--intervals but not overlapping
-		for i=1,levels[level].pickups do
+		for i=1,levels[config.level].pickups do
 			pickups[i]= {
 				sprite=pickup.sprite,
 				frame=pickup.frame,
@@ -151,8 +128,8 @@ function init_ship()
 	 on_screen=true,
 		sprite=1,
 		drop_sprite=6,
-		x=start_x,
-		y=start_y,
+		x=config.start_x,
+		y=config.start_y,
 		dx=0,
 		dy=0,
 		height=8,
@@ -161,7 +138,7 @@ function init_ship()
 		left_sprite=19,
 		right_sprite=19,
 		speed=0,
-		fuel=start_fuel,
+		fuel=config.start_fuel,
 		alive=1
 	}
 
@@ -173,18 +150,18 @@ function init_ground()
 	distance=128
 	distance+=cam.x+128
 	
-	while (last_edge<distance) do
+	while (config.last_edge<distance) do
 		new_edge=0
-		new_top=base_ground+rnd(128-base_ground)
+		new_top=config.base_ground+rnd(128-config.base_ground)
 
 		if(#ground_lines>0) then
-			new_edge=last_edge+rnd(levels[level].jag_rate)
+			new_edge=config.last_edge+rnd(levels[config.level].jag_rate)
 		end
 		
 		--check for the pad
 		--and draw around it
 		if(new_edge>=pad.x and
-			new_edge<=pad.x+levels[level].jag_rate) then
+			new_edge<=pad.x+levels[config.level].jag_rate) then
 	 		new_edge=pad.x
 	 		new_top=pad.y+pad.height
 	 		add(ground_lines,{x=pad.x-1,
@@ -192,12 +169,12 @@ function init_ground()
 			add(ground_lines,
 				{x=pad.x+pad.width,
 				y=new_top })
-			last_edge=pad.x+pad.height
+			config.last_edge=pad.x+pad.height
 	 	else
 	 		--go nuts
 			add(ground_lines,{x=new_edge,
 				y=new_top })
-			last_edge=new_edge
+			config.last_edge=new_edge
 		end
 	end
 end
@@ -214,15 +191,36 @@ function init_stars()
 		  	--see them spawn in
 		  	star={
 		  		x=rnd(screen+1*256)+screen*256,
-		  		y=rnd(base_ground)
+		  		y=rnd(config.base_ground)
 		  	}
 		  	add(stars,star)
 		end
 	end
 end
 
+function init_level()
+	config.game_state="levelintro"
+	init_ship(config.start_x,config.start_y,0,.2)
+	init_pad()
+	init_ground()
+	init_pickups()
+	config.collected=0
+end
+
 -->8
 --updates
+
+function handle_gameplay()
+	init_stars()
+
+	if(ship.on_screen) then
+		init_ground()
+	end
+		
+	control_ship()
+	move_ship()
+	detect_pickup()
+end
 
 --update ship trajectory based
 --on user input
@@ -234,8 +232,8 @@ function control_ship()
 		not on_pad()) then
 		--left
 		if (btn(0) and ship.fuel>0) then
-			ship.dx -= thrust
-			ship.fuel -= 1
+			ship.dx-=config.thrust
+			ship.fuel-=1
 			sfx(0)
 			if (ship.right_sprite==19 
 				or ship.right_sprite==22) then 
@@ -249,7 +247,7 @@ function control_ship()
 
 		--right
 		if(btn(1) and ship.fuel>0) then
-			ship.dx+=thrust
+			ship.dx+=config.thrust
 			ship.fuel-=1
 			sfx(0)
 
@@ -265,7 +263,7 @@ function control_ship()
 
 		--up
 		if(btn(2) and ship.fuel>0) then
-			ship.dy-=thrust
+			ship.dy-=config.thrust
 			ship.up_sprite=4+rnd(2)
 			ship.fuel-=1
 			sfx(0)
@@ -283,7 +281,7 @@ function detect_pickup()
 	for i=1,#pickups do
 		if(pickups[i].is_active) then
 			if(collide(ship,pickups[i])) then
-			 	collected+=1
+			 	config.collected+=1
 			 	pickups[i].is_active=false
 			 	sfx(3)
 			end
@@ -295,10 +293,10 @@ end
 function move_ship()		
 	--if ship is above ground 
 	--and not on the pad, move it
-	if(above_ground() and not
-	 on_pad()) then
-	 ship.x+=ship.dx
-		ship.dy+=gravity
+	if(above_ground() and not 
+		on_pad()) then
+		ship.x+=ship.dx
+		ship.dy+=config.gravity
 		ship.y+=ship.dy
 	else
 		if(ship.speed>10 
@@ -308,28 +306,28 @@ function move_ship()
 			ship.sprite=18
 			reset_thrust()
 			sfx(1)
-			game_state="over-bad"
+			config.game_state="over-bad"
 		elseif(ship.alive==1
-			and game_state=="started"
+			and config.game_state=="started"
 			and on_pad()) then
 			--ship landed smoothly on the pad
 			reset_thrust()
 			sfx(2)
-			game_state="over-good"
+			config.game_state="over-good"
 		elseif(ship.alive==1
-			and game=="started"
+			and config.game_state=="started"
 			and not on_pad()) then
 			--we landed, but not on the pad
 			reset_thrust()
 			sfx(2)
-			game_state="over-bad"
+			config.game_state="over-bad"
 		end
 	end
 	
-	if(ship.x>=start_x and
-		ship.x<=max_x) then
+	if(ship.x>=config.start_x and
+		ship.x<=config.max_x) then
 		--update camera position
-		cam.x=-start_x+ship.x
+		cam.x=-config.start_x+ship.x
 		ship.on_screen=true
 	else
 		ship.on_screen=false
@@ -349,7 +347,7 @@ function above_ground()
 	if(ship.x<cam.x or 
 	 ship.x>cam.x+128) then
 		--ship is off screen
-		if(flr(ship.y)+ship.height>base_ground) then
+		if(flr(ship.y)+ship.height>config.base_ground) then
 			return false
 		end
 	elseif(#death_points>1 and
@@ -384,24 +382,38 @@ end
 
 --handle initial draw state
 function draw_start()
-	if(game_state=="intro") then
-		draw_intro()
-	elseif(game_state=="levelintro") then
+	--stars forever
+	foreach(stars, draw_star)
+
+	if(config.game_state!="gameintro") then
+		draw_ship()
+		draw_pad()
+		draw_ground()
+		draw_pickups()
+	elseif(config.game_state=="gameintro") then
+		draw_game_intro()
+	end
+
+	if(config.game_state=="levelintro") then
 		cls(1)
 		draw_banner(banner.intro,
-			"level "..level,48,5)
+			"level "..config.level,48,5)
 		start_timer()	
 		
 		if(get_seconds()==2) then	
-			game_state="started"
+			config.game_state="started"
 		end
-	else
+	elseif(config.game_state=="started") then
+		draw_game()
+	elseif(config.game_state=="over-good" 
+		or config.game_state=="over-bad") then
+		draw_end()
 		draw_game()
 	end
 end
 
 --draw game intro
-function draw_intro()
+function draw_game_intro()
 	spr(64,0,intro.moon_y,16,9)
  
  	--animate moon
@@ -431,8 +443,8 @@ function draw_game()
 	print("distance: "..ceil(pad.x-ship.x+4).."m",
 		cam.x,7,7)
 	
-	--data icon
- 	percent=collected/#pickups*100
+	--data icon (fill-up)
+ 	percent=config.collected/#pickups*100
 	step=0
 	if(percent==100) then
 		step=3
@@ -444,22 +456,19 @@ function draw_game()
 	
 	spr(48,cam.x+120,2)
 	spr(49+step,cam.x+119,1)
-
-	--handle endgame state
-	draw_end()
 end
 
 --draw end game state
 function draw_end()
-	if(game_state=="over-good") then
+	if(config.game_state=="over-good") then
  		draw_banner(banner.good,
 			"mission accomplished",25)
-	elseif(game_state=="over-bad" or
-		game_state=="over-okay") then	
+	elseif(config.game_state=="over-bad" or
+		config.game_state=="over-okay") then	
 		draw_banner(banner.bad,
 			"mission failed",35)
-	elseif(game_state=="intro") then
- 		draw_banner(banner.intro,
+	elseif(config.game_state=="gameintro") then
+ 		draw_banner(banner.gameintro,
 			"mun lander",35)
  	end
 end
@@ -490,7 +499,7 @@ function draw_ship()
 	spr(ship.right_sprite,ship.x+2,ship.y)
 
 	--raise flag
-	if(game_state=="over-good") then
+	if(config.game_state=="over-good") then
 		spr(flag.drop_sprite,ship.x+2,ship.y-7)
 		spr(flag.drop_sprite,ship.x+4,ship.y-7)
 		spr(flag.sprite,ship.x+3,ship.y-7)
@@ -516,7 +525,7 @@ function draw_pickups()
 		for i=1,#pickups do
 			if(pickups[i].is_active) then
 				--animate trace effect
-				if(global.frames%2==0) then
+				if(upkeep.frames%2==0) then
 					pickups[i].frame+=1
 					if(pickups[i].frame == pickups[i].frames) then
 						--reset frame
@@ -537,7 +546,7 @@ function draw_ground()
 		if(ground_lines[i+1].x>=flr(cam.x)-10
 			and ground_lines[i+1].x<cam.x+256) then
 			--fill lines
-			for j=0,base_ground-pad.y+1 do
+			for j=0,config.base_ground-pad.y+1 do
 				line(ground_lines[i].x,
 				ground_lines[i].y+j,
 				ground_lines[i+1].x,
@@ -550,7 +559,7 @@ function draw_ground()
 	--the visible tops
 	distance=cam.x+128
 	for x=flr(cam.x), distance do
-		for y=base_ground-pad.y,128 do
+		for y=config.base_ground-pad.y,128 do
 			if(pget(x,y)==7) then
 				death_points[x]=y
 				break --stop at the top
@@ -569,7 +578,7 @@ end
 
 --draw landing pad
 function draw_pad()
-	if(flr(global.frames/8)%2==0) then
+	if(flr(upkeep.frames/8)%2==0) then
 		spr(pad.sprite,
 			pad.x,pad.y,2,2)
 	else
@@ -614,13 +623,13 @@ end
 
 --start the clock
 function start_timer()
- if(timer.start==0) timer.start=global.seconds
+ if(timer.start==0) timer.start=upkeep.seconds
 end
 
 --get the elapsed number of
 --seconds since timer start
 function get_seconds()
-	timer.seconds=global.seconds-timer.start
+	timer.seconds=upkeep.seconds-timer.start
 	return timer.seconds
 end
 
