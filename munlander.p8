@@ -16,7 +16,7 @@ config={
 	start_y=10,
 	last_edge=0,
 	game_state="gameintro",
-	level=4,
+	level=1,
 	collected=0,
 	percent_collected=0,
 	max_x=5000,
@@ -100,6 +100,12 @@ function init_levels()
 		pad_y=65,
 		pickups=4,
 		jag_rate=18
+	}
+	levels[5]={
+		pad_x=220,
+		pad_y=90,
+		pickups=5,
+		jag_rate=25
 	}
 end
 
