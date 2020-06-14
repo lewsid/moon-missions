@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.83
+-- mun lander alpha.0.84
 -- by lewsidboi, 2020
 
-version="a.0.83"
+version="a.0.84"
 
 --game parameters
 config={
@@ -16,9 +16,11 @@ config={
 	start_y=10,
 	last_edge=0,
 	game_state="gameintro",
-	level=1,
+	level=4,
 	collected=0,
-	max_x=5000
+	percent_collected=0,
+	max_x=5000,
+	score=0
 }
 
 upkeep={frames=0,seconds=0}
@@ -33,14 +35,14 @@ pickup={height=5,width=4,sprite=35,frames=8,frame=1}
 pickups={}
 intro={moon_y=100}
 flag={sprite=2,drop_sprite=7}
-banner={intro=12,subhead=1,start,good=11,bad=8,left=0,right=128}
+banner={intro=12,subhead=1,start,score=12,good=11,bad=8,left=0,right=128}
 
 function _init()
 	init_levels()
 end
 
 function _draw()
-	cls()
+	cls(0)
 	draw_start()
 end
 
@@ -53,9 +55,21 @@ function _update()
 		init_stars()
 		if(btn(❎)) then
 			init_level()
+			reset_banner()
 		end
 	elseif(config.game_state=="started") then
 		handle_gameplay()
+	elseif(config.game_state=="over-bad") then
+		if(btn(❎)) then
+			init_level()
+			reset_banner()
+		end
+	elseif(config.game_state=="over-good") then
+		if(btn(❎)) then
+			config.level+=1
+			init_level()
+			reset_banner()
+		end
 	end
 end
 -->8
@@ -63,26 +77,35 @@ end
 
 --level config
 function init_levels()
-	levels[1]=
-	{
+	levels[1]={
 		pad_x=130,
 		pad_y=90,
-		pickups=4,
+		pickups=2,
 		jag_rate=25
 	}
-	levels[2]=
-	{
+	levels[2]={
 		pad_x=150,
-		pad_y=95,
-		pickups=4,
+		pad_y=70,
+		pickups=3,
 		jag_rate=22
+	}
+	levels[3]={
+		pad_x=170,
+		pad_y=80,
+		pickups=4,
+		jag_rate=30
+	}
+	levels[4]={
+		pad_x=200,
+		pad_y=65,
+		pickups=4,
+		jag_rate=18
 	}
 end
 
 --set up the landing pad 
 function init_pad()
-	pad=
-	{
+	pad={
 		sprite=8,
 		width=16,
 		height=16,
@@ -123,9 +146,8 @@ function init_ship()
 	--left_sprite: 19 = off, 20 = on, 21 = on-alt
 	--right_sprite: 19 = off, 22 = on, 23 = on-alt
 
-	ship= 
-	{
-	 on_screen=true,
+	ship={
+	 	on_screen=true,
 		sprite=1,
 		drop_sprite=6,
 		x=config.start_x,
@@ -199,6 +221,7 @@ function init_stars()
 end
 
 function init_level()
+	reset_timer()
 	config.game_state="levelintro"
 	init_ship(config.start_x,config.start_y,0,.2)
 	init_pad()
@@ -282,6 +305,7 @@ function detect_pickup()
 		if(pickups[i].is_active) then
 			if(collide(ship,pickups[i])) then
 			 	config.collected+=1
+			 	config.percent_collected=config.collected/#pickups*100
 			 	pickups[i].is_active=false
 			 	sfx(3)
 			end
@@ -307,6 +331,7 @@ function move_ship()
 			reset_thrust()
 			sfx(1)
 			config.game_state="over-bad"
+			reset_banner()
 		elseif(ship.alive==1
 			and config.game_state=="started"
 			and on_pad()) then
@@ -314,6 +339,7 @@ function move_ship()
 			reset_thrust()
 			sfx(2)
 			config.game_state="over-good"
+			reset_banner()
 		elseif(ship.alive==1
 			and config.game_state=="started"
 			and not on_pad()) then
@@ -321,6 +347,7 @@ function move_ship()
 			reset_thrust()
 			sfx(2)
 			config.game_state="over-bad"
+			reset_banner()
 		end
 	end
 	
@@ -377,6 +404,11 @@ function on_pad()
 	end
 	return false
 end
+
+function calc_score()
+	config.score=(ship.fuel*10)
+		+(config.percent_collected*10)
+end
 -->8
 --draws
 
@@ -397,8 +429,8 @@ function draw_start()
 	if(config.game_state=="levelintro") then
 		cls(1)
 		draw_banner(banner.intro,
-			"level "..config.level,48,5)
-		start_timer()	
+			"level "..config.level,48,5,true)
+		start_timer()
 		
 		if(get_seconds()==2) then	
 			config.game_state="started"
@@ -407,8 +439,8 @@ function draw_start()
 		draw_game()
 	elseif(config.game_state=="over-good" 
 		or config.game_state=="over-bad") then
-		draw_end()
 		draw_game()
+		draw_end()
 	end
 end
 
@@ -421,13 +453,13 @@ function draw_game_intro()
  		intro.moon_y-=1
 	else
 		draw_banner(banner.intro,
-			"mun lander",43,-30)
+			"mun lander",43,-30,true)
 		draw_banner(banner.subhead,
-			"by smolboi games",32,-20)
+			"by smolboi games",32,-20,true)
 		draw_banner(banner.subhead,
-			"ver "..version.." 2020",33,64)
+			"ver "..version.." 2020",33,64,true)
 		draw_banner(banner.start,
-		 "press ❎ to start",31,-5)
+			"press ❎ to start",31,-5,true)
 	end 
 end
 
@@ -444,13 +476,12 @@ function draw_game()
 		cam.x,7,7)
 	
 	--data icon (fill-up)
- 	percent=config.collected/#pickups*100
 	step=0
-	if(percent==100) then
+	if(config.percent_collected==100) then
 		step=3
-	elseif(percent>=66) then
+	elseif(config.percent_collected>=66) then
 		step=2
-	elseif(percent>0) then
+	elseif(config.percent_collected>0) then
 		step=1
 	end
 	
@@ -461,15 +492,25 @@ end
 --draw end game state
 function draw_end()
 	if(config.game_state=="over-good") then
- 		draw_banner(banner.good,
-			"mission accomplished",25)
+		calc_score()
+
+		draw_banner(banner.good,
+			"mission accomplished",23,-20,true)
+		draw_banner(banner.subhead,
+			"fuel: "..ship.fuel,44,-8,true)
+		draw_banner(banner.subhead,
+			"data: "..config.collected.."/"..#pickups,44,3,true)
+		draw_banner(banner.intro,
+			"score: "..config.score,
+			40,15,true)
+		draw_banner(banner.start,
+			"press ❎ to continue",24,26,true)
 	elseif(config.game_state=="over-bad" or
-		config.game_state=="over-okay") then	
+		config.game_state=="over-okay") then
 		draw_banner(banner.bad,
-			"mission failed",35)
-	elseif(config.game_state=="gameintro") then
- 		draw_banner(banner.gameintro,
-			"mun lander",35)
+			"mission failed",34,-6,true)
+		draw_banner(banner.start,
+			"press ❎ to try again",21,5,true)
  	end
 end
 
@@ -587,8 +628,13 @@ function draw_pad()
 	end
 end
 
+function reset_banner()
+	banner.left=0
+	banner.right=128
+end
+
 --animate banner message
-function draw_banner(color,message,offset_x,offset_y)
+function draw_banner(color,message,offset_x,offset_y,dropshadow)
 	if(offset_y==nil) offset_y=0
 	
 	if(banner.left<128) then
@@ -605,8 +651,7 @@ function draw_banner(color,message,offset_x,offset_y)
 		cam.x+banner.right,60+offset_y,color)
 	
 	if(banner.left>=128) then
-		print(message,cam.x+offset_x+1,
-			54+offset_y,1)
+		if(dropshadow) print(message,cam.x+offset_x+1,54+offset_y,1)
  		print(message,cam.x+offset_x,
  			53+offset_y,7)
 	end
@@ -623,7 +668,7 @@ end
 
 --start the clock
 function start_timer()
- if(timer.start==0) timer.start=upkeep.seconds
+	if(timer.start==0) timer.start=upkeep.seconds
 end
 
 --get the elapsed number of
@@ -636,7 +681,7 @@ end
 function intersect(min1,max1,
 	min2,max2)
 	return max(min1,max1)>min(min2,max2) 
-  and min(min1,max1)<max(min2,max2)
+	and min(min1,max1)<max(min2,max2)
 end
 
 --return true if object1 has 
