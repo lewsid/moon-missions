@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.85
+-- mun lander alpha.0.86
 -- by lewsidboi, 2020
 
-version="a.0.85"
+version="a.0.86"
 
 --game parameters
 config={
@@ -232,12 +232,15 @@ function init_level()
 	death_points={}
  ground_lines={}
  stars={}
+ cam={x=0}
  pickups={}
+ init_stars()
 	init_ship(config.start_x,config.start_y,0,.2)
 	init_pad()
 	init_ground()
 	init_pickups()
 	config.collected=0
+	config.percent_collected=0
 end
 
 -->8
@@ -416,8 +419,9 @@ function on_pad()
 end
 
 function calc_score()
-	config.score=(ship.fuel*10)
-		+(config.percent_collected*10)
+	config.score=((ship.fuel*10)
+	 +(pad.x-config.start_x)*10)
+	 		*config.collected
 end
 -->8
 --draws
@@ -505,11 +509,16 @@ function draw_end()
 		calc_score()
 
 		draw_banner(banner.good,
-			"mission accomplished",23,-20,true)
+			"mission accomplished",23,-31,true)
+  draw_banner(banner.subhead,
+			"distance: "..pad.x-config.start_x.."m ("..((pad.x-config.start_x)*10)..")",
+			28,-19,true)	
 		draw_banner(banner.subhead,
-			"fuel: "..ship.fuel,44,-8,true)
+			"fuel: "..ship.fuel.." ("..(ship.fuel*10)..")",
+			44,-8,true)
 		draw_banner(banner.subhead,
-			"data: "..config.collected.."/"..#pickups,44,3,true)
+			"data: "..config.collected.."/"..#pickups.." (x"..#pickups..")",
+			44,3,true)
 		draw_banner(banner.intro,
 			"score: "..config.score,
 			40,15,true)
@@ -644,7 +653,9 @@ function reset_banner()
 end
 
 --animate banner message
-function draw_banner(color,message,offset_x,offset_y,dropshadow)
+function draw_banner(color,
+	message,offset_x,offset_y,
+	dropshadow)
 	if(offset_y==nil) offset_y=0
 	
 	if(banner.left<128) then
@@ -710,13 +721,15 @@ end
 --[ ] land speed indicator 
 --    (flashing, red/green)
 
---[ ] incorporate distnace 
+--[❎] incorporate distnace 
 --    into scoring
 
 --[❎] fix pad spawn bug
 
 --[ ] fix pickup spawning 
 --    inside terrain bug
+
+--[ ] fix pad spawning in air bug
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000055000111111100000000009a99a900a9aa9a000011000000000000000000000000000000000000000000000000000000000000000000000000000
