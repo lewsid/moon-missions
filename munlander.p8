@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.86
--- by lewsidboi, 2020
+-- mun lander alpha.0.87
+-- by lewsidboi/smolboigames, 2020
 
-version="a.0.86"
+version="a.0.87"
 
 --game parameters
 config={
@@ -81,7 +81,7 @@ function init_levels()
 		pad_x=130,  --distance to landing pad
 		pad_y=90,   --height of landing pad
 		pickups=2,  --number of pickups
-		jag_rate=25 --terrain jagginess
+		jag_rate=35 --terrain jagginess (higher=flatter, lower than 5 causes mem issues)
 	}
 	levels[2]={
 		pad_x=150,
@@ -187,8 +187,8 @@ function init_ground()
 		
 		--check for the pad
 		--and draw around it
-		if(new_edge>=pad.x and
-			new_edge<=pad.x+pad.width) then
+		if(new_edge>pad.x and
+		 config.last_edge<pad.x+pad.width) then
 	 	new_edge=pad.x
 	 	new_top=pad.y+pad.height
 	 	add(ground_lines,{x=pad.x-1,
@@ -729,7 +729,7 @@ end
 --[ ] fix pickup spawning 
 --    inside terrain bug
 
---[ ] fix pad spawning in air bug
+--[❎] fix pad spawning in air bug
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000055000111111100000000009a99a900a9aa9a000011000000000000000000000000000000000000000000000000000000000000000000000000000
