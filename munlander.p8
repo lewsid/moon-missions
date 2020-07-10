@@ -421,7 +421,10 @@ end
 function calc_score()
 	config.score=((ship.fuel*10)
 	 +(pad.x-config.start_x)*10)
-	 		*config.collected
+	
+	if(config.collected>0) then
+		config.score=config.score*config.collected
+	end 		
 end
 -->8
 --draws
@@ -517,7 +520,7 @@ function draw_end()
 			"fuel: "..ship.fuel.." ("..(ship.fuel*10)..")",
 			44,-8,true)
 		draw_banner(banner.subhead,
-			"data: "..config.collected.."/"..#pickups.." (x"..#pickups..")",
+			"data: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
 			44,3,true)
 		draw_banner(banner.intro,
 			"score: "..config.score,
