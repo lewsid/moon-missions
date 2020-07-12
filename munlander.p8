@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.87
+-- mun lander alpha.0.88
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.87"
+version="a.0.88"
 
 --game parameters
 config={
@@ -20,7 +20,8 @@ config={
 	collected=0,
 	percent_collected=0,
 	max_x=5000,
-	score=0
+	score=0,
+	total_score=0
 }
 
 upkeep={frames=0,seconds=0}
@@ -54,20 +55,20 @@ function _update()
 	if(config.game_state=="gameintro") then
 		init_stars()
 		if(btn(❎)) then
-			init_level()
+			init_level(false)
 			reset_banner()
 		end
 	elseif(config.game_state=="started") then
 		handle_gameplay()
 	elseif(config.game_state=="over-bad") then
 		if(btn(❎)) then
-			init_level()
+			init_level(true)
 			reset_banner()
 		end
 	elseif(config.game_state=="over-good") then
 		if(btn(❎)) then
 			config.level+=1
-			init_level()
+			init_level(false)
 			reset_banner()
 		end
 	end
@@ -124,7 +125,7 @@ end
 function init_pickups()
 	if(levels[config.level].pickups>0) then
 		--set the base x position
-		spawn_x=flr((pad.x)/levels[config.level].pickups)
+		spawn_x=flr((pad.x-50)/levels[config.level].pickups)
 		
 		--we spawn pickups at random
 		--intervals but not overlapping
@@ -179,10 +180,12 @@ function init_ground()
 	
 	while (config.last_edge<distance) do
 		new_edge=0
-		new_top=config.base_ground+rnd(128-config.base_ground)
+		new_top=config.base_ground
+			+rnd(128-config.base_ground)
 
 		if(#ground_lines>0) then
-			new_edge=config.last_edge+rnd(levels[config.level].jag_rate)
+			new_edge=config.last_edge
+				+rnd(levels[config.level].jag_rate)
 		end
 		
 		--check for the pad
@@ -213,34 +216,41 @@ function init_stars()
 	
 	if(#stars<60*screen+1) then
 		for i=1,60 do
-		  	--place stars up to one 
-		  	--screen away so we don't 
-		  	--see them spawn in
-		  	star={
-		  		x=rnd(screen+1*256)+screen*256,
-		  		y=rnd(config.base_ground)
-		  	}
-		  	add(stars,star)
+		 --place stars up to one 
+		 --screen away so we don't 
+		 --see them spawn in
+		 star={
+		  x=rnd(screen+1*256)+screen*256,
+		  y=rnd(config.base_ground)
+		 }
+		 add(stars,star)
 		end
 	end
 end
 
-function init_level()
+function init_level(preserve)
 	reset_timer()
 	config.game_state="levelintro"
-	config.last_edge=0
-	death_points={}
- ground_lines={}
- stars={}
- cam={x=0}
- pickups={}
- init_stars()
+	cam={x=0}
 	init_ship(config.start_x,config.start_y,0,.2)
 	init_pad()
-	init_ground()
-	init_pickups()
 	config.collected=0
 	config.percent_collected=0
+	
+	if(preserve==false) then
+		config.last_edge=0
+		death_points={}
+ 	ground_lines={}
+ 	stars={}
+ 	pickups={}
+ 	init_stars()		
+		init_ground()
+		init_pickups()
+	else
+		for i=1,#pickups do
+		 pickups[i].is_active=true
+	 end
+	end
 end
 
 -->8
@@ -422,6 +432,7 @@ function calc_score()
 	config.score=((ship.fuel*10)
 	 +(pad.x-config.start_x)*10)
 	 		*config.collected
+	config.total_score+=config.score
 end
 -->8
 --draws
@@ -718,6 +729,14 @@ end
 -->8
 --todos
 
+--[ ] add lives (x3)
+
+--[ ] add game over screen
+--    with score
+
+--[ ] fix level re-init after
+--    mission fail
+
 --[ ] land speed indicator 
 --    (flashing, red/green)
 
@@ -726,10 +745,25 @@ end
 
 --[❎] fix pad spawn bug
 
---[ ] fix pickup spawning 
+--[❎] fix pickup spawning 
 --    inside terrain bug
 
---[❎] fix pad spawning in air bug
+--[❎] fix pad spawning in 
+--     air bug
+
+--[ ] finish contructing levels
+
+--[ ] add star icon when all 
+--    pickups are collected
+
+--[ ] add high score view
+--    no initials, just scores
+--    and levels, visible from
+--    initial menu or after
+--    mission.
+
+--[ ] improve terrain level
+--    variance
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000055000111111100000000009a99a900a9aa9a000011000000000000000000000000000000000000000000000000000000000000000000000000000
