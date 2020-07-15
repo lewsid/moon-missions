@@ -7,23 +7,7 @@ __lua__
 version="a.0.88"
 
 --game parameters
-config={
-	start_fuel=100,
-	base_ground=110,
-	gravity=.02,
-	thrust=.15,
-	start_x=58,
-	start_y=10,
-	last_edge=0,
-	game_state="gameintro",
-	level=1,
-	collected=0,
-	percent_collected=0,
-	max_x=5000,
-	score=0,
-	total_score=0
-}
-
+config={}
 upkeep={frames=0,seconds=0}
 ship={}
 levels={}
@@ -39,6 +23,7 @@ flag={sprite=2,drop_sprite=7}
 banner={intro=12,subhead=1,start,score=12,good=11,bad=8,left=0,right=128}
 
 function _init()
+ init_config()
 	init_levels()
 end
 
@@ -61,9 +46,14 @@ function _update()
 	elseif(config.game_state=="started") then
 		handle_gameplay()
 	elseif(config.game_state=="over-bad") then
-		if(btn(❎)) then
-			init_level(true)
-			reset_banner()
+		if(config.lives>0) then
+		 if(btn(❎)) then
+		  config.lives-=1
+			 init_level(true)
+			 reset_banner()
+		 end
+		else
+		 config.game_state="game-over"
 		end
 	elseif(config.game_state=="over-good") then
 		if(btn(❎)) then
@@ -71,10 +61,34 @@ function _update()
 			init_level(false)
 			reset_banner()
 		end
+	elseif(config.game_state=="game-over") then
+	 if(btn(❎)) then
+	  init_config()
+	 end
 	end
 end
 -->8
 --inits
+
+function init_config()
+ config={
+  start_fuel=100,
+	 base_ground=110,
+	 gravity=.02,
+	 thrust=.15,
+	 start_x=58,
+	 start_y=10,
+	 last_edge=0,
+	 game_state="gameintro",
+	 level=1,
+	 collected=0,
+	 percent_collected=0,
+	 max_x=5000,
+	 score=0,
+	 total_score=0,
+	 lives=3
+ }
+end
 
 --level config
 function init_levels()
@@ -446,7 +460,8 @@ function draw_start()
 	--stars forever
 	foreach(stars, draw_star)
 
-	if(config.game_state!="gameintro") then
+	if(config.game_state!="gameintro" 
+	 and config.game_state!="game-over") then
 		draw_ship()
 		draw_pad()
 		draw_ground()
@@ -470,6 +485,13 @@ function draw_start()
 		or config.game_state=="over-bad") then
 		draw_game()
 		draw_end()
+	elseif(config.game_state=="game-over") then
+		draw_banner(banner.bad,
+			"game over",45,-10,true)
+		draw_banner(banner.subhead,
+			"score: "..config.score,41,1,true)
+	 draw_banner(banner.start,
+			"press ❎ to reset",31,20,true)
 	end
 end
 
@@ -503,6 +525,10 @@ function draw_game()
 		cam.x+1,8,1)
 	print("distance: "..ceil(pad.x-ship.x+4).."m",
 		cam.x,7,7)
+	print("lives: "..config.lives,
+		cam.x+1,15,1)
+	print("lives: "..config.lives,
+		cam.x,14,7)
 	
 	--data icon (fill-up)
 	step=0
@@ -518,25 +544,25 @@ function draw_game()
 	spr(49+step,cam.x+119,1)
 end
 
---draw end game state
+--draw end level state
 function draw_end()
 	if(config.game_state=="over-good") then
 		calc_score()
 
 		draw_banner(banner.good,
-			"mission accomplished",23,-31,true)
+			"mission accomplished",23,-30,true)
   draw_banner(banner.subhead,
 			"distance: "..pad.x-config.start_x.."m ("..((pad.x-config.start_x)*10)..")",
-			28,-19,true)	
+			26,-19,true)	
 		draw_banner(banner.subhead,
 			"fuel: "..ship.fuel.." ("..(ship.fuel*10)..")",
-			44,-8,true)
+			34,-8,true)
 		draw_banner(banner.subhead,
-			"data: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
-			44,3,true)
+			"data collected: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
+			16,3,true)
 		draw_banner(banner.intro,
 			"score: "..config.score,
-			40,15,true)
+			40,14,true)
 		draw_banner(banner.start,
 			"press ❎ to continue",24,26,true)
 	elseif(config.game_state=="over-bad" or
@@ -733,15 +759,19 @@ end
 -->8
 --todos
 
---[ ] add lives (x3)
+--[  ] fix game-over reset
+--     force moon animation to
+--     complete
 
---[ ] add game over screen
+--[❎] add lives (x3)
+
+--[❎] add game over screen
 --    with score
 
---[ ] fix level re-init after
+--[❎] fix level re-init after
 --    mission fail
 
---[ ] land speed indicator 
+--[  ] land speed indicator 
 --    (flashing, red/green)
 
 --[❎] incorporate distnace 
@@ -755,9 +785,9 @@ end
 --[❎] fix pad spawning in 
 --     air bug
 
---[ ] finish contructing levels
+--[  ] finish contructing levels
 
---[ ] add star icon when all 
+--[  ] add star icon when all 
 --    pickups are collected
 
 --[ ] add high score view
@@ -796,10 +826,10 @@ __gfx__
 00111100007776000077760000777600007776000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00011000000770000007700000077000000770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00011000000770000007700000077000000770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00111100007776000077760000777600007776000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-01111110077777600777776007777760077cc7600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-11111111777777767777777677cccc7677cccc760000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-111111117777777677cccc7677cccc7677cccc760000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00111100007776000077760000777600007776000006600000011000000000000000000000000000000000000000000000000000000000000000000000000000
+01111110077777600777776007777760077cc7600006610000011000000000000000000000000000000000000000000000000000000000000000000000000000
+11111111777777767777777677cccc7677cccc760060160000100100000000000000000000000000000000000000000000000000000000000000000000000000
+111111117777777677cccc7677cccc7677cccc760001001000000000000000000000000000000000000000000000000000000000000000000000000000000000
 01111110077777600777776007777760077777600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000d666d66d6ddddddd00000000000000000000000000000000000000000000000000000000
