@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
--- mun lander alpha.0.88
+-- mun lander alpha.0.89
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.88"
+version="a.0.89"
 
 --game parameters
 config={}
@@ -91,7 +91,7 @@ function init_config()
 	 max_x=5000,
 	 score=0,
 	 total_score=0,
-	 lives=0
+	 lives=3
  }
 end
 
@@ -99,33 +99,93 @@ end
 function init_levels()
 	levels[1]={
 		pad_x=130,  --distance to landing pad
-		pad_y=90,   --height of landing pad
-		pickups=2,  --number of pickups
+		pad_y=90,   --height of landing pad (keep between 50 and 90)
+		pickups=#levels+1,  --number of pickups
 		jag_rate=35 --terrain jagginess (higher=flatter, lower than 5 causes mem issues)
 	}
 	levels[2]={
 		pad_x=150,
 		pad_y=70,
-		pickups=3,
+		pickups=#levels+1,
 		jag_rate=22
 	}
 	levels[3]={
 		pad_x=170,
 		pad_y=80,
-		pickups=4,
+		pickups=#levels+1,
 		jag_rate=30
 	}
 	levels[4]={
 		pad_x=200,
 		pad_y=65,
-		pickups=4,
+		pickups=#levels+1,
 		jag_rate=18
 	}
 	levels[5]={
 		pad_x=220,
 		pad_y=90,
-		pickups=5,
+		pickups=#levels+1,
 		jag_rate=25
+	}
+	levels[6]={
+		pad_x=250,
+		pad_y=50,
+		pickups=#levels+1,
+		jag_rate=15
+	}
+	levels[7]={
+		pad_x=280,
+		pad_y=60,
+		pickups=#levels+1,
+		jag_rate=10
+	}
+	levels[8]={
+		pad_x=400,
+		pad_y=70,
+		pickups=#levels+1,
+		jag_rate=50
+	}
+	levels[9]={
+		pad_x=500,
+		pad_y=55,
+		pickups=#levels+1,
+		jag_rate=30
+	}
+	levels[10]={
+		pad_x=600,
+		pad_y=85,
+		pickups=#levels+1,
+		jag_rate=100
+	}
+	levels[11]={
+		pad_x=800,
+		pad_y=81,
+		pickups=#levels+1,
+		jag_rate=90
+	}
+	levels[11]={
+		pad_x=1000,
+		pad_y=51,
+		pickups=#levels+1,
+		jag_rate=65
+	}
+	levels[12]={
+		pad_x=1500,
+		pad_y=61,
+		pickups=#levels+1,
+		jag_rate=70
+	}
+	levels[14]={
+		pad_x=2500,
+		pad_y=82,
+		pickups=#levels+1,
+		jag_rate=100
+	}
+	levels[15]={
+		pad_x=3500,
+		pad_y=57,
+		pickups=#levels+1,
+		jag_rate=140
 	}
 end
 
@@ -529,6 +589,10 @@ function draw_interface()
 		cam.x+1,15,1)
 	print("lives: "..config.lives,
 		cam.x,14,7)
+	print(config.collected.."/"..
+	 #pickups,cam.x+113,4,1)
+	print(config.collected.."/"..
+	 #pickups,cam.x+112,3,7)
 	
 	--data icon (fill-up)
 	step=0
@@ -540,8 +604,8 @@ function draw_interface()
 		step=1
 	end
 	
-	spr(48,cam.x+120,2)
-	spr(49+step,cam.x+119,1)
+	spr(48,cam.x+101,2)
+	spr(49+step,cam.x+100,1)
 end
 
 --draw end level state
@@ -564,7 +628,7 @@ function draw_level_end()
 			"score: "..config.score,
 			40,14,true)
 		draw_banner(banner.start,
-			"press ❎ to continue",24,26,true)
+			"press ❎ to continue",24,25,true)
 	elseif(config.game_state=="over-bad" or
 		config.game_state=="over-okay") then
 		draw_banner(banner.bad,
@@ -572,6 +636,15 @@ function draw_level_end()
 		draw_banner(banner.start,
 			"press ❎ to try again",21,5,true)
  	end
+end
+
+function draw_game_over()
+ draw_banner(banner.bad,
+		"game over",45,-10,true)
+	draw_banner(banner.subhead,
+		"final score: "..config.score,30,1,true)
+	draw_banner(banner.start,
+		"press ❎ to reset",31,16,true)
 end
 
 --draw our wee spaceship
@@ -718,15 +791,6 @@ function draw_banner(color,
  			53+offset_y,7)
 	end
 end
-
-function draw_game_over()
- draw_banner(banner.bad,
-		"game over",45,-10,true)
-	draw_banner(banner.subhead,
-		"score: "..config.score,41,1,true)
-	draw_banner(banner.start,
-		"press ❎ to reset",31,16,true)
-end
 -->8
 --helpers
 
@@ -788,13 +852,14 @@ end
 
 --[❎] fix pad spawn bug
 
---[❎] fix pickup spawning 
+--[ ] fix pickup spawning 
 --    inside terrain bug
+--    back, but rare
 
 --[❎] fix pad spawning in 
 --     air bug
 
---[  ] finish contructing levels
+--[❎] finish contructing levels
 
 --[  ] add star icon when all 
 --    pickups are collected
@@ -807,6 +872,12 @@ end
 
 --[ ] improve terrain level
 --    variance
+
+--[ ] add credits if level 10
+--    is beaten
+
+--[ ] add total score to level
+--    intro
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000055000111111100000000009a99a900a9aa9a000011000000000000000000000000000000000000000000000000000000000000000000000000000
