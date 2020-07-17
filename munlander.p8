@@ -39,7 +39,7 @@ function _update()
 
 	if(config.game_state=="gameintro") then
 		init_stars()
-		if(btn(❎)) then
+		if(btnp(❎)) then
 			init_level(false)
 			reset_banner()
 		end
@@ -63,6 +63,11 @@ function _update()
 		end
 	elseif(config.game_state=="game-over") then
 	 if(btn(❎)) then
+	  --reset the moon position
+	 	intro.moon_y=100
+	 	camera()
+	 	cam.x=0
+	 	--reset the game
 	  init_config()
 	 end
 	end
@@ -86,7 +91,7 @@ function init_config()
 	 max_x=5000,
 	 score=0,
 	 total_score=0,
-	 lives=3
+	 lives=0
  }
 end
 
@@ -460,9 +465,8 @@ function draw_start()
 	--stars forever
 	foreach(stars, draw_star)
 
-	if(config.game_state!="gameintro" 
-	 and config.game_state!="game-over") then
-		draw_ship()
+	if(config.game_state!="gameintro") then
+	 draw_ship()
 		draw_pad()
 		draw_ground()
 		draw_pickups()
@@ -480,18 +484,14 @@ function draw_start()
 			config.game_state="started"
 		end
 	elseif(config.game_state=="started") then
-		draw_game()
+		draw_interface()
 	elseif(config.game_state=="over-good" 
 		or config.game_state=="over-bad") then
-		draw_game()
-		draw_end()
+		draw_interface()
+		draw_level_end()
 	elseif(config.game_state=="game-over") then
-		draw_banner(banner.bad,
-			"game over",45,-10,true)
-		draw_banner(banner.subhead,
-			"score: "..config.score,41,1,true)
-	 draw_banner(banner.start,
-			"press ❎ to reset",31,20,true)
+		draw_interface()
+		draw_game_over()
 	end
 end
 
@@ -514,8 +514,8 @@ function draw_game_intro()
 	end 
 end
 
---draw in-progress game stuff
-function draw_game()
+--draw game interface
+function draw_interface()
 	--status
 	print("fuel: "..ship.fuel,
 		cam.x+1,1,1)
@@ -545,7 +545,7 @@ function draw_game()
 end
 
 --draw end level state
-function draw_end()
+function draw_level_end()
 	if(config.game_state=="over-good") then
 		calc_score()
 
@@ -718,6 +718,15 @@ function draw_banner(color,
  			53+offset_y,7)
 	end
 end
+
+function draw_game_over()
+ draw_banner(banner.bad,
+		"game over",45,-10,true)
+	draw_banner(banner.subhead,
+		"score: "..config.score,41,1,true)
+	draw_banner(banner.start,
+		"press ❎ to reset",31,16,true)
+end
 -->8
 --helpers
 
@@ -759,7 +768,7 @@ end
 -->8
 --todos
 
---[  ] fix game-over reset
+--[❎] fix game-over reset
 --     force moon animation to
 --     complete
 
