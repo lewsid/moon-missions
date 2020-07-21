@@ -55,13 +55,13 @@ function _update()
 		handle_gameplay()
 	elseif(config.game_state=="over-bad") then
 		if(config.lives>0) then
-		 if(btn(❎)) then
-		  config.lives-=1
-			 init_level(true)
-			 reset_banner()
-		 end
+			if(btn(❎)) then
+				config.lives-=1
+				init_level(true)
+				reset_banner()
+			end
 		else
-		 config.game_state="game-over"
+			config.game_state="game-over"
 		end
 	elseif(config.game_state=="over-good") then
 		if(btn(❎)) then
@@ -70,14 +70,14 @@ function _update()
 			reset_banner()
 		end
 	elseif(config.game_state=="game-over") then
-	 if(btn(❎)) then
-	  --reset the moon position
-	 	intro.moon_y=100
-	 	camera()
-	 	cam.x=0
-	 	--reset the game
-	  init_config()
-	 end
+		if(btn(❎)) then
+	  		--reset the moon position
+	 		intro.moon_y=100
+	 		camera()
+	 		cam.x=0
+	 		--reset the game
+	  		init_config()
+	 	end
 	end
 end
 -->8
@@ -467,8 +467,17 @@ function move_ship()
 		cam.x=-config.start_x+ship.x
 		ship.on_screen=true
 
-		if(ship.y<0) then
-			cam.y=ship.y
+		--snap camera if over top
+		if(ship.y<0 and ship.y>-20) then
+			cam.y-=2
+		elseif(ship.y<-20) then
+			cam.y=ship.y-20
+		elseif(ship.y>0) then
+			if(cam.y>0) then
+				cam.y-=2
+			else
+				cam.y=0
+			end
 		end
 	else
 		ship.on_screen=false
@@ -612,6 +621,9 @@ function draw_interface()
 		#pickups,cam.x+113,cam.y+4,1)
 	print(config.collected.."/"..
 		#pickups,cam.x+112,cam.y+3,7)
+
+	print("y: "..ship.y,
+		cam.x,cam.y+24,7)
 	
 	--data icon (fill-up)
 	step=0
@@ -894,7 +906,7 @@ end
 --[ ] improve terrain level
 --    variance
 
---[ ] add credits if level 10
+--[ ] add credits if level 15
 --    is beaten
 
 --[ ] add total score to level
