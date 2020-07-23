@@ -642,9 +642,6 @@ function draw_interface()
 	print(config.collected.."/"..
 		#pickups,cam.x+112,cam.y+3,7)
 
-	print(screen_x.."/"..screen_y,cam.x,cam.y+21,7)
-	print(ship.x,cam.x,cam.y+28,7)
-
 	--data icon (fill-up)
 	step=0
 	if(config.percent_collected==100) then
