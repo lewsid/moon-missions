@@ -784,18 +784,21 @@ function draw_ground()
 	--search for and store 
 	--the visible tops
 	distance=cam.x+128
-	for x=flr(cam.x), distance do
+	for x=flr(cam.x),distance do
 		for y=config.base_ground-pad.y,128 do
 			if(pget(x,y)==7) then
 				death_points[x]=y
+				
 				break --stop at the top
 			end
 		end
 	end
 	
 	--highlight the death line
-	for i=flr(cam.x),#death_points do
-		pset(i,death_points[i],13)
+	for i=flr(cam.x),flr(cam.x)+128 do
+		if(death_points[i]) then
+			pset(i,death_points[i],13)
+		end
 	end
 	
 	--draw the lowest line (fills in gaps)
@@ -886,9 +889,9 @@ end
 -->8
 --todos
 
---[  ] fix ground line draw
+--[❎] fix ground line draw
 
---[  ] fix star draw below y=0
+--[❎] fix star draw below y=0
 
 --[❎] fix game-over reset
 --     force moon animation to
@@ -919,7 +922,7 @@ end
 
 --[❎] finish contructing levels
 
---[  ] Follow camera y when 
+--[❎] Follow camera y when 
 --above the fold
 
 --[  ] add star icon when all 
