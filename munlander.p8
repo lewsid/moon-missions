@@ -30,8 +30,11 @@ banner={intro=12,subhead=1,start,
 	score=12,good=11,bad=8,left=0,
 	flash=10,right=128}
 
+screen_x=0
+screen_y=0
+
 function _init()
- init_config()
+	init_config()
 	init_levels()
 end
 
@@ -45,7 +48,11 @@ function _update()
 	upkeep.seconds=upkeep.frames/30
 	upkeep.frames+=1
 
-	if(config.game_state=="gameintro") then
+	--track screen
+	screen_x=flr(cam.x/128)+1
+	screen_y=abs(flr(cam.y/128))+1
+
+	if(config.game_state=="game-intro") then
 		init_stars()
 		if(btnp(❎)) then
 			init_level(false)
@@ -84,23 +91,23 @@ end
 --inits
 
 function init_config()
- config={
-  start_fuel=100,
-	 base_ground=110,
-	 gravity=.02,
-	 thrust=.15,
-	 start_x=58,
-	 start_y=10,
-	 last_edge=0,
-	 game_state="gameintro",
-	 level=1,
-	 collected=0,
-	 percent_collected=0,
-	 max_x=5000,
-	 score=0,
-	 total_score=0,
-	 lives=3
- }
+ 	config={
+		start_fuel=1000,
+		base_ground=110,
+		gravity=.02,
+		thrust=.15,
+		start_x=58,
+		start_y=20,
+		last_edge=0,
+		game_state="game-intro",
+		level=1,
+		collected=0,
+		percent_collected=0,
+		max_x=5000,
+		score=0,
+		total_score=0,
+		lives=3
+	}
 end
 
 --level config
@@ -278,40 +285,42 @@ function init_ground()
 		--check for the pad
 		--and draw around it
 		if(new_edge>pad.x and
-		 config.last_edge<pad.x+pad.width) then
-	 	new_edge=pad.x
-	 	new_top=pad.y+pad.height
-	 	add(ground_lines,{x=pad.x-1,
+			config.last_edge<pad.x+pad.width) then
+		 	new_edge=pad.x
+		 	new_top=pad.y+pad.height
+		 	add(ground_lines,{x=pad.x-1,
 				y=new_top })
 			add(ground_lines,
-			 {x=pad.x+pad.width,
-			 y=new_top })
+				{x=pad.x+pad.width,
+					y=new_top })
 			config.last_edge=pad.x+pad.width
-	 else
-	 	--go nuts
+	 	else
+	 		--go nuts
 			add(ground_lines,{x=new_edge,
-				y=new_top })
-		 config.last_edge=new_edge
+				y=new_top})
+		 	config.last_edge=new_edge
 		end
 	end
 end
 
---initialize stars, two screens
---worth at a time
+--initialize matrix of stars
 function init_stars()
-	screen=flr(cam.x/128)
-	
-	if(#stars<60*screen+1) then
-		for i=1,60 do
-		 --place stars up to one 
-		 --screen away so we don't 
-		 --see them spawn in
-		 star={
-		  x=rnd(screen+1*256)+screen*256,
-		  y=rnd(config.base_ground)
-		 }
-		 add(stars,star)
-		end
+	if(stars[screen_x]==nil) then
+		for s_x=1,screen_x do
+	    	if(stars[s_x]==nil) do
+				stars[s_x]={}
+			end
+			
+			for s_y=1,screen_y do
+				if(stars[s_x][s_y]==nil) then
+					stars[s_x][s_y]={}
+					for i=1,60 do
+						--printh(i,'out.txt')
+						stars[s_x][s_y][i]={x=rnd(s_x*128),y=rnd(128)}
+					end
+				end
+			end
+	    end  
 	end
 end
 
@@ -327,16 +336,16 @@ function init_level(preserve)
 	if(preserve==false) then
 		config.last_edge=0
 		death_points={}
- 	ground_lines={}
- 	stars={}
- 	pickups={}
- 	init_stars()		
+ 		ground_lines={}
+ 		stars={}
+ 		pickups={}
+ 		init_stars()		
 		init_ground()
 		init_pickups()
 	else
 		for i=1,#pickups do
-		 pickups[i].is_active=true
-	 end
+			pickups[i].is_active=true
+	 	end
 	end
 end
 
@@ -461,26 +470,21 @@ function move_ship()
 		end
 	end
 	
+	--handle follow camera
 	if(ship.x>=config.start_x and
 		ship.x<=config.max_x) then
 		--update camera position
 		cam.x=-config.start_x+ship.x
 		ship.on_screen=true
-
-		--snap camera if over top
-		if(ship.y<0 and ship.y>-20) then
-			cam.y-=2
-		elseif(ship.y<-20) then
-			cam.y=ship.y-20
-		elseif(ship.y>0) then
-			if(cam.y>0) then
-				cam.y-=2
-			else
-				cam.y=0
-			end
-		end
 	else
 		ship.on_screen=false
+	end
+
+	--snap camera if over top
+	if(ship.y<20) then
+		cam.y=ship.y-20
+	else
+		cam.y=0
 	end
 end
 
@@ -503,7 +507,7 @@ function above_ground()
 	elseif(#death_points>1 and
 		flr(ship.x+ship.width)<=#death_points) then
 		for x=flr(ship.x),flr(ship.x)+ship.width do
-			if(x>0) then
+			if(x>0 and ship.y>20) then
 				if(flr(ship.y)+ship.height>death_points[x]) then
 					--if any part of the ship
 					--touches a death line
@@ -544,14 +548,15 @@ end
 --handle initial draw state
 function draw_start()
 	--stars forever
-	foreach(stars, draw_star)
+	--foreach(stars, draw_star)
+	draw_stars()
 
-	if(config.game_state!="gameintro") then
+	if(config.game_state!="game-intro") then
 		draw_ship()
 		draw_pad()
 		draw_ground()
 		draw_pickups()
-	elseif(config.game_state=="gameintro") then
+	elseif(config.game_state=="game-intro") then
 		draw_game_intro()
 	end
 
@@ -622,9 +627,8 @@ function draw_interface()
 	print(config.collected.."/"..
 		#pickups,cam.x+112,cam.y+3,7)
 
-	print("y: "..ship.y,
-		cam.x,cam.y+24,7)
-	
+	print("screen-x:"..screen_x,cam.x+1,cam.y+21,7)
+
 	--data icon (fill-up)
 	step=0
 	if(config.percent_collected==100) then
@@ -711,14 +715,20 @@ function draw_ship()
 	end
 end
 
+function draw_stars()
+	foreach(stars[screen_x][screen_y],draw_star)
+end
+
 --twinkle twinkle
 function draw_star(star)
  	--only draw stars on screen
 	if(star.x>=cam.x and 
-		star.x<= cam.x+128) then
+	star.x<=cam.x+128 and
+	star.y>=cam.y and
+	star.y<=cam.y+128) then
 		--check for terrain and draw
 		if(pget(star.x,star.y)!=7 and
-	 	pget(star.x,star.y)!=6) then
+ 			pget(star.x,star.y)!=6) then
 			pset(star.x,star.y,6)
 		end
 	end
@@ -865,6 +875,10 @@ end
 -->8
 --todos
 
+--[  ] fix ground line draw
+
+--[  ] fix star draw below y=0
+
 --[❎] fix game-over reset
 --     force moon animation to
 --     complete
@@ -894,6 +908,9 @@ end
 
 --[❎] finish contructing levels
 
+--[  ] Follow camera y when 
+--above the fold
+
 --[  ] add star icon when all 
 --    pickups are collected
 
@@ -911,6 +928,9 @@ end
 
 --[ ] add total score to level
 --    intro
+
+--[ ] stripe the sky blue 
+--    and black
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000055000111111100000000009a99a900a9aa9a000011000000000000000000000000000000000000000000000000000000000000000000000000000
