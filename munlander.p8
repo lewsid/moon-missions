@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.0.90
+-- mun lander alpha.0.91
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.90"
+version="a.0.91"
 
 --game parameters
 config={}
