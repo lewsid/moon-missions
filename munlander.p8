@@ -732,7 +732,7 @@ function draw_ship()
 end
 
 function draw_stars()
-	--need to render the 9 screens around the player
+	--render the 9 screens around the player
 	for i=max(screen_x-1,1),max(screen_x-1,1)+2 do
 		for j=max(screen_y-1,1),max(screen_y-1,1)+2 do
 			foreach(stars[i][j],draw_star)
