@@ -92,6 +92,7 @@ end
 
 function init_config()
  	config={
+ 		stars_per_screen=60,
 		start_fuel=1000,
 		base_ground=110,
 		gravity=.02,
@@ -303,24 +304,38 @@ function init_ground()
 	end
 end
 
---initialize matrix of stars
+--initialize matrix of stars based on current position
 function init_stars()
-	if(stars[screen_x]==nil) then
-		for s_x=1,screen_x do
-	    	if(stars[s_x]==nil) do
-				stars[s_x]={}
-			end
+	--9 screens surrounding the player
+	for star_screen_x=max(screen_x-1,1),max(screen_x-1,1)+2 do
+		for star_screen_y=max(screen_y-1,1),max(screen_y-1,1)+2 do
 			
-			for s_y=1,screen_y do
-				if(stars[s_x][s_y]==nil) then
-					stars[s_x][s_y]={}
-					for i=1,60 do
-						--printh(i,'out.txt')
-						stars[s_x][s_y][i]={x=rnd(s_x*128),y=rnd(128)}
+			if(stars[star_screen_x]==nil) then
+				stars[star_screen_x]={}
+			end
+	    	
+	    	if(stars[star_screen_x][star_screen_y]==nil) do
+				stars[star_screen_x][star_screen_y]={}
+
+				for i=1,config.stars_per_screen do
+					ranx_x=nil
+					rand_y=nil
+
+					rand_x=flr(rnd(128))+(128*(star_screen_x-1))
+					
+					if(star_screen_y==1) then
+						rand_y=flr(rnd(128))
+					else
+						rand_y=-(flr(rnd(128))
+							+(128*(star_screen_y-2)))
 					end
+					
+					stars[star_screen_x][star_screen_y][i]
+						={x=rand_x,y=rand_y}
 				end
 			end
-	    end  
+
+		end
 	end
 end
 
@@ -337,7 +352,7 @@ function init_level(preserve)
 		config.last_edge=0
 		death_points={}
  		ground_lines={}
- 		stars={}
+ 		--stars={}
  		pickups={}
  		init_stars()		
 		init_ground()
@@ -627,7 +642,8 @@ function draw_interface()
 	print(config.collected.."/"..
 		#pickups,cam.x+112,cam.y+3,7)
 
-	print("screen-x:"..screen_x,cam.x+1,cam.y+21,7)
+	print(screen_x.."/"..screen_y,cam.x,cam.y+21,7)
+	print(ship.x,cam.x,cam.y+28,7)
 
 	--data icon (fill-up)
 	step=0
@@ -716,21 +732,19 @@ function draw_ship()
 end
 
 function draw_stars()
-	foreach(stars[screen_x][screen_y],draw_star)
+	--need to render the 9 screens around the player
+	for i=max(screen_x-1,1),max(screen_x-1,1)+2 do
+		for j=max(screen_y-1,1),max(screen_y-1,1)+2 do
+			foreach(stars[i][j],draw_star)
+		end
+	end
 end
 
 --twinkle twinkle
 function draw_star(star)
- 	--only draw stars on screen
-	if(star.x>=cam.x and 
-	star.x<=cam.x+128 and
-	star.y>=cam.y and
-	star.y<=cam.y+128) then
-		--check for terrain and draw
-		if(pget(star.x,star.y)!=7 and
- 			pget(star.x,star.y)!=6) then
-			pset(star.x,star.y,6)
-		end
+ 	if(pget(star.x,star.y)!=7 and
+		pget(star.x,star.y)!=6) then
+		pset(star.x,star.y,6)
 	end
 end
 
