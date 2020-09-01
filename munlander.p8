@@ -4,7 +4,7 @@ __lua__
 -- mun lander alpha.0.92
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.92"
+version="a.0.93"
 
 --game parameters
 config={}
@@ -619,7 +619,7 @@ function draw_game_intro()
 		draw_banner(banner.start,
 			"by smolboi games",33,-18,5)
 		draw_banner(banner.subhead,
-			"ver "..version.." 2020",33,64,false)
+			"VER "..version.." 2020",33,64,false)
 
 		--draw borders
  		line(0,24,31,24,12)
@@ -644,9 +644,9 @@ function draw_interface()
 		cam.x+2,cam.y+1,1)
 	print("fuel: "..ship.fuel,
 		cam.x+1,cam.y,7)
-	print("distance: "..ceil(pad.x-ship.x+4).."m",
+	print("distance: "..ceil(pad.x-ship.x+4).."M",
 		cam.x+2,cam.y+8,1)
-	print("distance: "..ceil(pad.x-ship.x+4).."m",
+	print("distance: "..ceil(pad.x-ship.x+4).."M",
 		cam.x+1,cam.y+7,7)
 	print("lives: "..config.lives,
 		cam.x+2,cam.y+15,1)
@@ -679,13 +679,13 @@ function draw_level_end()
 		draw_banner(banner.good,
 			"mission accomplished",23,-30,5)
 		draw_banner(banner.subhead,
-			"distance: "..pad.x-config.start_x.."m ("..((pad.x-config.start_x)*10)..")",
+			"dISTANCE: "..pad.x-config.start_x.."M ("..((pad.x-config.start_x)*10)..")",
 			26,-19,false)	
 		draw_banner(banner.subhead,
-			"fuel: "..ship.fuel.." ("..(ship.fuel*10)..")",
+			"fUEL: "..ship.fuel.." ("..(ship.fuel*10)..")",
 			34,-8,false)
 		draw_banner(banner.subhead,
-			"data collected: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
+			"dATA cOLLECTED: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
 			16,3,false)
 		draw_banner(banner.intro,
 			"score: "..config.score,
