@@ -39,7 +39,6 @@ function _init()
 end
 
 function _draw()
-	cls(0)
 	draw_start()
 end
 
@@ -562,41 +561,50 @@ end
 
 --handle initial draw state
 function draw_start()
-	--stars forever
-	--foreach(stars, draw_star)
-	draw_stars()
-
 	if(config.game_state!="game-intro") then
+		--game in progress
+		cls(0)
+		draw_stars()
 		draw_ship()
 		draw_pad()
 		draw_ground()
 		draw_pickups()
 	elseif(config.game_state=="game-intro") then
+		--intro moon slide
+		cls(0)
+		draw_stars()
 		draw_game_intro()
 	end
 
 	if(config.game_state=="levelintro") then
-		cls(1)
-		draw_banner(banner.intro,
-			"level "..config.level,48,5,true)
-		start_timer()
-		
-		if(get_seconds()==2) then	
-			config.game_state="started"
-		end
+		draw_level_intro()
 	elseif(config.game_state=="started") then
+		--game in progress
 		draw_interface()
 	elseif(config.game_state=="over-good" 
 		or config.game_state=="over-bad") then
+		--ship landed/crashed
 		draw_interface()
 		draw_level_end()
 	elseif(config.game_state=="game-over") then
+		--no more lives
 		draw_interface()
 		draw_game_over()
 	end
 end
 
---draw game intro
+function draw_level_intro()
+	--level splash
+	cls(1)
+	draw_banner(banner.intro,
+		"level "..config.level,48,5,1)
+	start_timer()
+	
+	if(get_seconds()==2) then	
+		config.game_state="started"
+	end
+end
+
 function draw_game_intro()
 	spr(intro.moon_sprite,0,intro.moon_y,
 		intro.moon_width,intro.moon_height)
@@ -606,15 +614,22 @@ function draw_game_intro()
  		intro.moon_y-=1
  	else
  		--draw logo and info text
- 		line(0,24,31,24,12)
- 		line(95,24,128,24,12)
- 		spr(intro.logo_sprite,28,8,
+		spr(intro.logo_sprite,28,8,
  			intro.logo_width,intro.logo_height)
 		draw_banner(banner.start,
-			"by smolboi games",33,-18,true)
+			"by smolboi games",33,-18,5)
 		draw_banner(banner.subhead,
-			"ver "..version.." 2020",33,64,true)
+			"ver "..version.." 2020",33,64,false)
 
+		--draw borders
+ 		line(0,24,31,24,12)
+ 		line(95,24,127,24,12)
+ 		--line(1,0,126,0,12)
+ 		--line(0,1,0,126,12)
+ 		--line(1,127,126,127,12)
+ 		--line(127,126,127,1,12)
+
+ 		--that retro gudness
 		if(upkeep.seconds%2<1) then
 			print("[press ❎ to start]",28,54,1)
  			print("[press ❎ to start]",27,53,10)
@@ -626,17 +641,17 @@ end
 function draw_interface()
 	--status
 	print("fuel: "..ship.fuel,
-		cam.x+1,cam.y+1,1)
+		cam.x+2,cam.y+1,1)
 	print("fuel: "..ship.fuel,
-		cam.x,cam.y,7)
+		cam.x+1,cam.y,7)
 	print("distance: "..ceil(pad.x-ship.x+4).."m",
-		cam.x+1,cam.y+8,1)
+		cam.x+2,cam.y+8,1)
 	print("distance: "..ceil(pad.x-ship.x+4).."m",
-		cam.x,cam.y+7,7)
+		cam.x+1,cam.y+7,7)
 	print("lives: "..config.lives,
-		cam.x+1,cam.y+15,1)
+		cam.x+2,cam.y+15,1)
 	print("lives: "..config.lives,
-		cam.x,cam.y+14,7)
+		cam.x+1,cam.y+14,7)
 	print(config.collected.."/"..
 		#pickups,cam.x+113,cam.y+4,1)
 	print(config.collected.."/"..
@@ -662,37 +677,37 @@ function draw_level_end()
 		calc_score()
 
 		draw_banner(banner.good,
-			"mission accomplished",23,-30,true)
+			"mission accomplished",23,-30,5)
 		draw_banner(banner.subhead,
 			"distance: "..pad.x-config.start_x.."m ("..((pad.x-config.start_x)*10)..")",
-			26,-19,true)	
+			26,-19,false)	
 		draw_banner(banner.subhead,
 			"fuel: "..ship.fuel.." ("..(ship.fuel*10)..")",
-			34,-8,true)
+			34,-8,false)
 		draw_banner(banner.subhead,
 			"data collected: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
-			16,3,true)
+			16,3,false)
 		draw_banner(banner.intro,
 			"score: "..config.score,
-			40,14,true)
+			40,14,1)
 		draw_banner(banner.start,
-			"press ❎ to continue",24,25,true)
+			"press ❎ to continue",24,25,1)
 	elseif(config.game_state=="over-bad" or
 		config.game_state=="over-okay") then
 		draw_banner(banner.bad,
-			"mission failed",34,-6,true)
+			"mission failed",34,-6,5)
 		draw_banner(banner.start,
-			"press ❎ to try again",21,5,true)
+			"press ❎ to try again",21,5,1)
  	end
 end
 
 function draw_game_over()
 	draw_banner(banner.bad,
-		"game over",45,-10,true)
+		"game over",45,-10,1)
 	draw_banner(banner.subhead,
-		"final score: "..config.score,30,1,true)
+		"final score: "..config.score,30,1,1)
 	draw_banner(banner.start,
-		"press ❎ to reset",31,16,true)
+		"press ❎ to reset",31,16,1)
 end
 
 --draw our wee spaceship
@@ -843,7 +858,9 @@ function draw_banner(color,message,offset_x,offset_y,dropshadow,text_color)
 		cam.x+banner.right,60+offset_y,color)
 	
 	if(banner.left>=128) then
-		if(dropshadow) print(message,cam.x+offset_x+1,54+offset_y,1)
+		if(dropshadow) then
+			print(message,cam.x+offset_x+1,54+offset_y,dropshadow)
+		end
  		print(message,cam.x+offset_x,
  			53+offset_y,text_color)
 	end
