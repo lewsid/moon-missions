@@ -92,7 +92,7 @@ end
 function init_config()
  	config={
  		stars_per_screen=60,
-		start_fuel=1000,
+		start_fuel=100,
 		base_ground=110,
 		gravity=.02,
 		thrust=.15,
@@ -106,6 +106,7 @@ function init_config()
 		max_x=5000,
 		score=0,
 		total_score=0,
+		score_frame=1,
 		lives=3
 	}
 end
@@ -472,6 +473,7 @@ function move_ship()
 			reset_thrust()
 			sfx(2)
 			config.game_state="over-good"
+			calc_score()
 			reset_banner()
 		elseif(ship.alive==1
 			and config.game_state=="started"
@@ -480,6 +482,7 @@ function move_ship()
 			reset_thrust()
 			sfx(2)
 			config.game_state="over-bad"
+			calc_score()
 			reset_banner()
 		end
 	end
@@ -674,8 +677,6 @@ end
 --draw end level state
 function draw_level_end()
 	if(config.game_state=="over-good") then
-		calc_score()
-
 		draw_banner(banner.good,
 			"mission accomplished",23,-30,5)
 		draw_banner(banner.subhead,
@@ -685,11 +686,9 @@ function draw_level_end()
 			"fUEL: "..ship.fuel.." ("..(ship.fuel*10)..")",
 			34,-8,false)
 		draw_banner(banner.subhead,
-			"dATA cOLLECTED: "..config.collected.."/"..#pickups.." (x"..config.collected..")",
+			"dATA cOLLECTED: "..config.collected.."/"..#pickups.." (X"..config.collected..")",
 			16,3,false)
-		draw_banner(banner.intro,
-			"score: "..config.score,
-			40,14,1)
+		draw_score_banner()
 		draw_banner(banner.start,
 			"press ❎ to continue",24,25,1)
 	elseif(config.game_state=="over-bad" or
@@ -701,11 +700,39 @@ function draw_level_end()
  	end
 end
 
+function draw_score_banner()
+	if(upkeep.seconds%1==0) then
+		config.score_frame+=1
+
+		if(config.score_frame>6) then
+			config.score_frame=1
+		end
+	end	
+
+	if(config.score_frame<=2) then
+		draw_banner(banner.intro,
+			"level score: "..config.score,
+			30,14,1)
+	elseif(config.score_frame==3) then
+		draw_banner(banner.intro,
+			"",
+			30,14,1)
+	elseif(config.score_frame<=5) then
+		draw_banner(banner.intro,
+			"total score: "..config.total_score,
+			30,14,1)
+	elseif(config.score_frame==6) then
+		draw_banner(banner.intro,
+			"",
+			30,14,1)
+	end
+end
+
 function draw_game_over()
 	draw_banner(banner.bad,
 		"game over",45,-10,1)
 	draw_banner(banner.subhead,
-		"final score: "..config.score,30,1,1)
+		"final score: "..config.total_score,30,1,1)
 	draw_banner(banner.start,
 		"press ❎ to reset",31,16,1)
 end
@@ -957,8 +984,8 @@ end
 --[ ] add credits if level 15
 --    is beaten
 
---[ ] add total score to level
---    intro
+--[❎] add total score to level
+--    end
 
 --[ ] stripe the sky blue 
 --    and black
