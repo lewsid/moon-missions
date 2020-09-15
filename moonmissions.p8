@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.0.96
+-- mun lander alpha.0.97
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.96"
+version="a.0.97"
 
 --game parameters
 config={}
@@ -198,7 +198,7 @@ function init_levels()
 		jag_rate=100
 	}
 	levels[15]={
-		pad_x=3500,
+		pad_x=3000,
 		pad_y=57,
 		pickups=#levels+1,
 		jag_rate=140
@@ -551,14 +551,18 @@ function on_pad()
 end
 
 function calc_score()
-	config.score=((ship.fuel*10)
-	 +(pad.x-config.start_x)*10)
-	
+	local fuel_score=ship.fuel*10
+	local distance_score=(pad.x-config.start_x)*10
+	config.score=0
+
 	if(config.collected>0) then
-		config.score=config.score*config.collected
+		for i=1,config.collected do
+			config.score+=shr(fuel_score,16)
+			config.score+=shr(distance_score,16)
+			config.total_score+=shr(fuel_score,16)
+			config.total_score+=shr(distance_score,16)
+		end
 	end
-	
-	config.total_score+=config.score
 end
 -->8
 --draws
@@ -714,7 +718,7 @@ function draw_score_banner()
 
 	if(config.score_frame<=2) then
 		draw_banner(banner.intro,
-			"level score: "..config.score,
+			"level score: "..get_score_text(config.score),
 			30,14,1)
 	elseif(config.score_frame==3) then
 		draw_banner(banner.intro,
@@ -722,7 +726,7 @@ function draw_score_banner()
 			30,14,1)
 	elseif(config.score_frame<=5) then
 		draw_banner(banner.intro,
-			"total score: "..config.total_score,
+			"total score: "..get_score_text(config.total_score),
 			30,14,1)
 	elseif(config.score_frame==6) then
 		draw_banner(banner.intro,
@@ -735,7 +739,7 @@ function draw_game_over()
 	draw_banner(banner.bad,
 		"game over",45,-10,1)
 	draw_banner(banner.subhead,
-		"final score: "..config.total_score,30,1,1)
+		"final score: "..get_score_text(config.total_score),30,1,1)
 	draw_banner(banner.start,
 		"press ❎ to reset",31,16,1)
 end
@@ -750,11 +754,18 @@ function draw_ship()
 			ship.sprite=18
 		end
 	else
+		--ship is moving up
 		if(ship.dy<0) then
 			ship.sprite=56
 		else		
+			--provide visual feedback of
+			--descent speed
 			if(ship.speed>10) then
-				ship.sprite=53
+				if(ship.sprite==53) then
+					ship.sprite=54
+				else
+					ship.sprite=53
+				end
 			elseif(ship.speed>8) then
 				ship.sprite=54
 			elseif(ship.speed>6) then
@@ -947,10 +958,23 @@ function collide(object1,object2)
 		intersect(object1.y,object1.y+object1.height,
 		object2.y,object2.y+object2.height)
 end
+
+--https://www.lexaloffle.com/bbs/?pid=22677
+--@Felice
+function get_score_text(val)
+	local s = ""
+	local v = abs(val)
+	while (v!=0) do
+		s = shl(v % 0x0.000a, 16)..s
+		v /= 10
+	end
+	if (val<0)  s = "-"..s
+	return s 
+end 
 -->8
 --todos
 
---[  ] fix scoring bug (int too small)
+--[❎] fix scoring bug (int too small)
 --     https://www.lexaloffle.com/bbs/?pid=22677
 
 --[❎] fix ground line draw
@@ -988,7 +1012,7 @@ end
 --[❎] Follow camera y when 
 --above the fold
 
---[  ] add star icon when all 
+--[❎] add star icon when all 
 --    pickups are collected
 
 --[ ] add high score view
@@ -1002,9 +1026,6 @@ end
 
 --[ ] add credits if level 15
 --    is beaten
-
---[ ] add total score to level
---    intro
 
 --[ ] stripe the sky blue 
 --    and black
@@ -1037,7 +1058,7 @@ __gfx__
 00011000000770000007700000077000000770000005500000055000000550000005500000055000000000000000000000000000000000000000000000000000
 0001100000077000000770000007700000077000005dd500005dd500005dd500005dd500005dd5000000a0000000000000000000000000000000000000000000
 001111000077760000777600007776000077760005d66d5005d66d5005d66d5005d66d5005d66d50000aaa000000000000000000000000000000000000000000
-01111110077777600777776007777760077cc760058888500599995005aaaa5005cccc5005bbbb5000aaaaa00000000000000000000000000000000000000000
+01111110077777600777776007777760077cc760058888500599995005aaaa5005cccc5005cccc5000aaaaa00000000000000000000000000000000000000000
 11111111777777767777777677cccc7677cccc760d6666d00d6666d00d6666d00d6666d00d6666d0000a0a000000000000000000000000000000000000000000
 111111117777777677cccc7677cccc7677cccc76565665655656656556566565565665655656656500a000a00000000000000000000000000000000000000000
 01111110077777600777776007777760077777606d6556d66d6556d66d6556d66d6556d66d6556d6000000000000000000000000000000000000000000000000
