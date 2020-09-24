@@ -601,6 +601,14 @@ function on_pad()
 	return false
 end
 
+function check_new_high_score()
+	for i=1,#high_scores do
+		if(config.total_score>high_scores[2]) then
+			return true
+		end
+	end
+end
+
 function calc_score()
 	local fuel_score=ship.fuel*10
 	local distance_score=(pad.x-config.start_x)*10
@@ -776,10 +784,16 @@ function draw_level_end()
 			"press ❎ to continue",24,25,1)
 	elseif(config.game_state=="over-bad" or
 		config.game_state=="over-okay") then
-		draw_banner(banner.bad,
-			"mission failed",34,-6,5)
-		draw_banner(banner.start,
-			"press ❎ to try again",21,5,1)
+		if(check_new_high_score()) then
+			--high-score-name-entry
+			draw_banner(banner.good,
+				"new high score!",34,-6,5)
+		else
+			draw_banner(banner.bad,
+				"mission failed",34,-6,5)
+			draw_banner(banner.start,
+				"press ❎ to try again",21,5,1)
+		end
  	end
 end
 
