@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.0.97
+-- mun lander alpha.0.98
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.97"
+version="a.0.98"
 
 --game parameters
 config={}
@@ -32,8 +32,22 @@ banner={intro=12,subhead=1,start,
 
 screen_x=0
 screen_y=0
+slot_length=18
+high_scores={}
 
 function _init()
+	cartdata("lewsid-moon-missions")
+
+	--load high scores
+	for i=0,2 do
+		local high_score=load_score(i+1)
+		if(high_score[0]==nil) then 
+			save_score((i+1),"smolboi","1000")
+			high_score=load_score(i+1)
+		end
+		high_scores[i+1]=high_score
+	end
+
 	init_config()
 	init_levels()
 end
@@ -56,6 +70,10 @@ function _update()
 		if(btnp(❎)) then
 			init_level(false)
 			reset_banner()
+		end
+		
+		if(btnp(🅾️)) then
+			config.game_state="high-scores"
 		end
 	elseif(config.game_state=="started") then
 		handle_gameplay()
@@ -107,7 +125,7 @@ function init_config()
 		score=0,
 		total_score=0,
 		score_frame=1,
-		lives=3
+		lives=0
 	}
 end
 
@@ -192,16 +210,46 @@ function init_levels()
 		jag_rate=70
 	}
 	levels[14]={
-		pad_x=2500,
+		pad_x=2000,
 		pad_y=82,
 		pickups=#levels+1,
 		jag_rate=100
 	}
 	levels[15]={
-		pad_x=3000,
+		pad_x=2200,
 		pad_y=57,
 		pickups=#levels+1,
 		jag_rate=140
+	}
+	levels[16]={
+		pad_x=2300,
+		pad_y=53,
+		pickups=#levels+1,
+		jag_rate=100
+	}
+	levels[17]={
+		pad_x=2400,
+		pad_y=61,
+		pickups=#levels+1,
+		jag_rate=101
+	}
+	levels[18]={
+		pad_x=2500,
+		pad_y=63,
+		pickups=#levels+1,
+		jag_rate=105
+	}
+	levels[19]={
+		pad_x=2800,
+		pad_y=65,
+		pickups=#levels+1,
+		jag_rate=110
+	}
+	levels[20]={
+		pad_x=3000,
+		pad_y=70,
+		pickups=#levels+1,
+		jag_rate=115
 	}
 end
 
@@ -248,7 +296,7 @@ function init_ship()
 	--right_sprite: 19 = off, 22 = on, 23 = on-alt
 
 	ship={
-	 on_screen=true,
+		on_screen=true,
 		sprite=1,
 		drop_sprite=6,
 		x=config.start_x,
@@ -554,14 +602,13 @@ function calc_score()
 	local fuel_score=ship.fuel*10
 	local distance_score=(pad.x-config.start_x)*10
 	config.score=0
+	local multiplier=config.collected+1
 
-	if(config.collected>0) then
-		for i=1,config.collected do
-			config.score+=shr(fuel_score,16)
-			config.score+=shr(distance_score,16)
-			config.total_score+=shr(fuel_score,16)
-			config.total_score+=shr(distance_score,16)
-		end
+	for i=1,multiplier do
+		config.score+=shr(fuel_score,16)
+		config.score+=shr(distance_score,16)
+		config.total_score+=shr(fuel_score,16)
+		config.total_score+=shr(distance_score,16)
 	end
 end
 -->8
@@ -569,7 +616,13 @@ end
 
 --handle initial draw state
 function draw_start()
-	if(config.game_state!="game-intro") then
+	if(config.game_state=='high-scores') then
+		cls(0)
+		draw_stars()
+		draw_intro_borders()
+		draw_high_scores()
+		draw_logo(false)
+	elseif(config.game_state!="game-intro") then
 		--game in progress
 		cls(0)
 		draw_stars()
@@ -601,6 +654,14 @@ function draw_start()
 	end
 end
 
+function draw_high_scores()
+	print("high scores",42,40)
+
+	--for i=1,3 do
+		print(high_scores[1][1].." "..high_scores[1][2],25,48)
+	--end
+end
+
 function draw_level_intro()
 	--level splash
 	cls(1)
@@ -621,21 +682,8 @@ function draw_game_intro()
 	if(intro.moon_y>70) then
  		intro.moon_y-=1
  	else
- 		--draw logo and info text
-		spr(intro.logo_sprite,28,8,
- 			intro.logo_width,intro.logo_height)
-		draw_banner(banner.start,
-			"by smolboi games",33,-18,5)
-		draw_banner(banner.subhead,
-			"VER "..version.." 2020",33,64,false)
-
-		--draw borders
- 		line(0,24,31,24,12)
- 		line(95,24,127,24,12)
- 		line(1,0,126,0,12)
- 		line(0,1,0,126,12)
- 		line(1,127,126,127,12)
- 		line(127,126,127,1,12)
+ 		draw_logo(true)
+ 		draw_intro_borders()
 
  		--that retro gudness
 		if(upkeep.seconds%2<1) then
@@ -643,6 +691,29 @@ function draw_game_intro()
  			print("[press ❎ to start]",27,53,10)
 		end
 	end 
+end
+
+function draw_logo(with_extras)
+	--draw logo and info text
+	spr(intro.logo_sprite,28,8,
+			intro.logo_width,intro.logo_height)
+
+	if(with_extras) then
+		draw_banner(banner.start,
+			"by smolboi games",33,-18,5)
+		draw_banner(banner.subhead,
+			"🅾️ hIGH sCORES",35,64,false)
+	end
+end
+
+function draw_intro_borders()
+	--draw borders
+	line(0,24,31,24,12)
+	line(95,24,127,24,12)
+	line(1,0,126,0,12)
+	line(0,1,0,126,12)
+	line(1,127,126,127,12)
+	line(127,126,127,1,12)
 end
 
 --draw game interface
@@ -736,10 +807,12 @@ function draw_score_banner()
 end
 
 function draw_game_over()
+	local score_text=get_score_text(config.total_score)
+
 	draw_banner(banner.bad,
 		"game over",45,-10,1)
 	draw_banner(banner.subhead,
-		"final score: "..get_score_text(config.total_score),30,1,1)
+		"score: "..score_text,45-((#score_text-1)*1),1,1)
 	draw_banner(banner.start,
 		"press ❎ to reset",31,16,1)
 end
@@ -969,8 +1042,88 @@ function get_score_text(val)
 		v /= 10
 	end
 	if (val<0)  s = "-"..s
+
+	if(s=="") then
+		s="0"
+	end
+
 	return s 
 end 
+
+function load_score(slot)
+	local player_name=""
+	local player_score=""
+	local slot_offset=((slot_length*(slot-1)))
+	local parts={}
+	local pos=1
+	
+	for i=slot_offset,
+		slot_offset+slot_length do
+		if(pos<12) then
+			player_name=player_name..chr(dget(i))
+		elseif(pos>12) then
+	 		player_score=player_score..chr(dget(i))
+		end
+		pos+=1
+	end
+
+	local output={player_name,player_score}
+
+	return output
+end
+
+--save the name and score
+--up to three, then overwrite
+--the lowest
+--first twelve chars=name
+--next six chars=score
+function save_score(slot,player_name,score)
+	--move all chars into a table
+	--of char codes
+	local name_parts=split(player_name,"")
+	local score_parts=split(score,"")
+	local slot_offset=(slot-1)*slot_length
+
+	--store each char of name
+	for i=1,12 do
+		if(name_parts[i]) then
+			dset((slot_offset+i)-1,
+				ord(name_parts[i]))
+		else
+			--pad out to 12 chars
+			dset(slot_offset+i,ord(" "))
+		end
+	end
+	
+	--same treatment for score
+	for i=1,6 do
+		if(score_parts[i]) then
+			dset((slot_offset+i+12)-1,
+				ord(score_parts[i]))
+		else
+			--pad out 6 chars
+			dset((slot_offset+i+12)-1
+				,ord(" "))
+		end
+	end
+end
+
+function erase_data()
+	for i=0,63 do
+		dset(i,nil)
+	end
+end
+
+
+
+--output cart save data
+function output_data()
+	local output=""
+ 	for i=0,63 do
+ 		output=output..chr(dget(i))
+  	printh(i..": "..chr(dget(i)))
+	end
+end
 -->8
 --todos
 
