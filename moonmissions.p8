@@ -38,11 +38,14 @@ high_scores={}
 function _init()
 	cartdata("lewsid-moon-missions")
 
+	erase_data();
+	output_data();
+
 	--load high scores
 	for i=0,2 do
 		local high_score=load_score(i+1)
 		if(high_score[0]==nil) then 
-			save_score((i+1),"smolboi","1000")
+			save_score((i+1),"christopherz","123456")
 			high_score=load_score(i+1)
 		end
 		high_scores[i+1]=high_score
@@ -658,7 +661,8 @@ function draw_high_scores()
 	print("high scores",42,40)
 
 	--for i=1,3 do
-		print(high_scores[1][1].." "..high_scores[1][2],25,48)
+		print(high_scores[1][1],20,50)
+		print(high_scores[1][2],75,50)
 	--end
 end
 
@@ -1058,8 +1062,8 @@ function load_score(slot)
 	local pos=1
 	
 	for i=slot_offset,
-		slot_offset+slot_length do
-		if(pos<12) then
+		slot_offset+slot_length-1 do
+		if(pos<=12) then
 			player_name=player_name..chr(dget(i))
 		elseif(pos>12) then
 	 		player_score=player_score..chr(dget(i))
@@ -1102,7 +1106,7 @@ function save_score(slot,player_name,score)
 				ord(score_parts[i]))
 		else
 			--pad out 6 chars
-			dset((slot_offset+i+12)-1
+			dset((slot_offset+i+12)
 				,ord(" "))
 		end
 	end
@@ -1169,16 +1173,15 @@ end
 --    pickups are collected
 
 --[ ] add high score view
---    no initials, just scores
---    and levels, visible from
---    initial menu or after
---    mission.
 
 --[❎] improve terrain level
 --    variance
 
---[ ] add credits if level 15
+--[ ] add credits if level game
 --    is beaten
+
+--[ ] create some minimal
+--	  music
 
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
