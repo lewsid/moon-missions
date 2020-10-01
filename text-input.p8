@@ -1,3 +1,9 @@
+pico-8 cartridge // http://www.pico-8.com
+version 29
+__lua__
+-- by lewsidboi/smolboigames, 2020
+
+
 cur={x=0,y=0}
 alphabet="abcdefghijklmnopqrstuvwxyz "
 chars=split(alphabet,"")

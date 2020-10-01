@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.0.98
+-- mun lander alpha.0.981
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.98"
+version="a.0.981"
 
 --game parameters
 config={}
@@ -70,13 +70,17 @@ function _update()
 
 	if(config.game_state=="game-intro") then
 		init_stars()
+		
 		if(btnp(❎)) then
-			init_level(false)
-			reset_banner()
+			start_game()
 		end
 		
 		if(btnp(🅾️)) then
 			config.game_state="high-scores"
+		end
+	elseif(config.game_state=="high-scores") then
+		if(btnp(❎)) then
+			start_game()
 		end
 	elseif(config.game_state=="started") then
 		handle_gameplay()
@@ -419,6 +423,11 @@ end
 -->8
 --updates
 
+function start_game()
+	init_level(false)
+	reset_banner()
+end
+
 function handle_gameplay()
 	init_stars()
 
@@ -672,6 +681,8 @@ function draw_high_scores()
 		print(high_scores[i][1],25,55+((i-1)*10))
 		print(high_scores[i][2],80,55+((i-1)*10))
 	end
+
+	draw_start_flash(90)
 end
 
 function draw_level_intro()
@@ -696,13 +707,16 @@ function draw_game_intro()
  	else
  		draw_logo(true)
  		draw_intro_borders()
-
- 		--that retro gudness
-		if(upkeep.seconds%2<1) then
-			print("[press ❎ to start]",28,54,1)
- 			print("[press ❎ to start]",27,53,10)
-		end
+		draw_start_flash(54)
 	end 
+end
+
+function draw_start_flash(top)
+	--that retro gudness
+	if(upkeep.seconds%2<1) then
+		print("[press ❎ to start]",28,top,1)
+		print("[press ❎ to start]",27,top-1,10)
+	end
 end
 
 function draw_logo(with_extras)
