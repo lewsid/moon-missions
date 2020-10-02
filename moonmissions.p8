@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.0.981
+-- mun lander alpha.0.982
 -- by lewsidboi/smolboigames, 2020
 
 version="a.0.981"
@@ -29,11 +29,16 @@ flag={sprite=2,drop_sprite=7}
 banner={intro=12,subhead=1,start,
 	score=12,good=11,bad=8,left=0,
 	flash=10,right=128}
-
 screen_x=0
 screen_y=0
 slot_length=18
 high_scores={}
+alphabet="abcdefghijklmnopqrstuvwxyz "
+name_entry={
+	cur={x=0,y=0},chars=split(alphabet,""),
+	textpos=40,
+	name="",
+	saved=false}
 
 function _init()
 	cartdata("lewsid-moon-missions")
@@ -59,6 +64,7 @@ function _update()
 	screen_x=flr(cam.x/128)+1
 	screen_y=abs(flr(cam.y/128))+1
 
+	--main game state router
 	if(config.game_state=="game-intro") then
 		init_stars()
 		
@@ -100,6 +106,47 @@ function _update()
 	 		--reset the game
 	  		init_config()
 	 	end
+	elseif(config.game_state=="goto-enter-name") then
+		if(btn(❎)) then
+			config.game_state="enter-name"
+		end
+	elseif(config.game_state=="enter-name") then
+		--left
+		if(btnp(0)) then
+			if(name_entry.cur.x>0) name_entry.cur.x-=1
+		end
+
+		--right
+		if(btnp(1)) then
+			if(name_entry.cur.x<8) name_entry.cur.x+=1
+		end
+
+		--up
+		if(btnp(2)) then
+			if(name_entry.cur.y>0) name_entry.cur.y-=1
+		end
+
+		--down
+		if(btnp(3)) then
+			if(name_entry.cur.y<3) name_entry.cur.y+=1
+		end
+	 
+	 	--add letter
+		if(btnp(5)) then
+			if(#name_entry.name<12 and name_entry.cur.y<3) then
+				--cursor is over letter
+				local c=(name_entry.cur.x+1)+(name_entry.cur.y*9)
+				name_entry.name=name_entry.name..name_entry.chars[c]
+			elseif(name_entry.name!="") then
+				--cursor is over save button
+				name_entry.saved=true
+			end
+		end
+
+		--remove letter
+		if(btnp(4)) then
+			name_entry.name=sub(name_entry.name,0,#name_entry.name-1)
+		end
 	end
 end
 -->8
@@ -602,8 +649,8 @@ function on_pad()
 end
 
 function check_new_high_score()
-
 	for i=1,#high_scores do
+		--convert scores into hex for comparison
 		local raw_high_score = tonum('0x'..get_score_text(config.total_score))
 		local raw_saved_score = tonum('0x'..tostr(high_scores[i][2]))
 
@@ -622,8 +669,8 @@ end
 function calc_score()
 	local fuel_score=ship.fuel*10
 	local distance_score=(pad.x-config.start_x)*10
-	config.score=0
 	local multiplier=config.collected+1
+	config.score=0
 
 	for i=1,multiplier do
 		config.score+=shr(fuel_score,16)
@@ -643,6 +690,11 @@ function draw_start()
 		draw_intro_borders()
 		draw_high_scores()
 		draw_logo(false)
+	elseif(config.game_state=="enter-name") then
+		--game in progress
+		cls(0)
+		draw_stars()
+		draw_name_entry()
 	elseif(config.game_state!="game-intro") then
 		--game in progress
 		cls(0)
@@ -668,10 +720,52 @@ function draw_start()
 		--ship landed/crashed
 		draw_interface()
 		draw_level_end()
-	elseif(config.game_state=="game-over") then
+	elseif(config.game_state=="game-over" or 
+		config.game_state=="goto-enter-name") then
 		--no more lives
 		draw_interface()
 		draw_game_over()
+	end
+end
+
+function draw_name()
+	print(name_entry.name,43,30,12)
+end
+
+function draw_cursor()
+	if(name_entry.cur.y<3) then
+		rectfill(20+(name_entry.cur.x*10),
+			44+(name_entry.cur.y*10),
+			24+(name_entry.cur.x*10),
+			50+(name_entry.cur.y*10),
+			12)
+	else
+		rectfill(49,79,73,85,12)
+	end
+end
+
+function draw_alphabet()
+	local pos=1
+
+	for i=0,2 do
+		for j=0,8 do
+			print(name_entry.chars[pos],
+				21+(j*10),
+				45+(i*10),6)
+			pos+=1 		
+		end
+	end
+end
+
+function draw_name_entry()
+	if(name_entry.saved==false) then
+		print("name: ",20,30,7)
+		draw_cursor()
+		draw_alphabet()
+		draw_name()
+		print("[save]",50,80,6)
+	else
+		print("saved!",50,50,12)
 	end
 end
 
@@ -845,9 +939,12 @@ function draw_game_over()
 	local slot = check_new_high_score()
 		
 	if(slot) then
-		--high-score-name-entry
-		draw_banner(banner.good,
-			"new high score!",34,12,5)
+		config.game_state="goto-enter-name"
+		
+		draw_banner(banner.intro,
+			"new high score!",35,12,5)
+		draw_banner(banner.start,
+			"press ❎ to enter name",20,25,1)
 	else
 		draw_banner(banner.start,
 			"press ❎ to reset",31,16,1)

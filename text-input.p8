@@ -17,48 +17,52 @@ end
 
 function _update()
 	--left
- if(btnp(0)) then
- 	if(cur.x>0) cur.x-=1
- end
+	if(btnp(0)) then
+		if(cur.x>0) cur.x-=1
+	end
+
+	--right
+	if(btnp(1)) then
+		if(cur.x<8) cur.x+=1
+	end
+
+	--up
+	if(btnp(2)) then
+		if(cur.y>0) cur.y-=1
+	end
+
+	--down
+	if(btnp(3)) then
+		if(cur.y<3) cur.y+=1
+	end
  
- --right
- if(btnp(1)) then
- 	if(cur.x<8) cur.x+=1
- end
- 
- --up
- if(btnp(2)) then
- 	if(cur.y>0) cur.y-=1
- end
- 
- --down
- if(btnp(3)) then
- 	if(cur.y<3) cur.y+=1
- end
- 
- if(btnp(4)) then
-  if(#name<12 and cur.y<3) then
- 		local c=(cur.x+1)+(cur.y*9)
- 		name=name..chars[c]
- 	elseif(name!="") then
- 		saved=true
- 	end
- end
- 
- if(btnp(5)) then
- 	name=sub(name,0,#name-1)
- end
+ 	--add letter
+	if(btnp(4)) then
+		if(#name<12 and cur.y<3) then
+			--cursor is over letter
+			local c=(cur.x+1)+(cur.y*9)
+			name=name..chars[c]
+		elseif(name!="") then
+			--cursor is over save button
+			saved=true
+		end
+	end
+
+	--remove letter
+	if(btnp(5)) then
+		name=sub(name,0,#name-1)
+	end
 end
 
 function _draw()
- cls()
+	cls()
  
- if(saved==false) then
- 	print("name: ",20,30,7)
- 	draw_cursor()
- 	draw_alphabet()
- 	draw_name()
- 	print("[save]",50,80,6)
+	if(saved==false) then
+	 	print("name: ",20,30,7)
+	 	draw_cursor()
+	 	draw_alphabet()
+	 	draw_name()
+	 	print("[save]",50,80,6)
 	else
 		print("saved!",50,50,12)
 	end
@@ -81,14 +85,14 @@ function draw_cursor()
 end
 
 function draw_alphabet()
- local pos=1
+	local pos=1
 
 	for i=0,2 do
- 	for j=0,8 do
- 		print(chars[pos],
- 			21+(j*10),
- 			45+(i*10),6)
- 		pos+=1 		
- 	end
- end
+		for j=0,8 do
+			print(chars[pos],
+				21+(j*10),
+				45+(i*10),6)
+			pos+=1 		
+		end
+	end
 end
