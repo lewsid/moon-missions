@@ -40,16 +40,7 @@ function _init()
 
 	--erase_data()
 
-	--load high scores
-	for i=0,2 do
-		local high_score=load_score(i+1)
-		if(high_score[0]==nil) then 
-			--set some defaults
-			save_score((i+1),"christopherj","123456")
-			high_score=load_score(i+1)
-		end
-		high_scores[i+1]=high_score
-	end
+	load_high_scores()
 
 	init_config()
 	init_levels()
@@ -611,11 +602,21 @@ function on_pad()
 end
 
 function check_new_high_score()
+
 	for i=1,#high_scores do
-		if(config.total_score>high_scores[2]) then
-			return true
+		local raw_high_score = tonum('0x'..get_score_text(config.total_score))
+		local raw_saved_score = tonum('0x'..tostr(high_scores[i][2]))
+
+		--printh(raw_high_score, 'out.md', true, true)
+		--printh(raw_saved_score, 'out.md', false, true)
+
+		if(raw_high_score>raw_saved_score) then
+			--printh('higher: '..i, 'out.md', false, true)
+			return i
 		end
 	end
+
+	return false
 end
 
 function calc_score()
@@ -798,16 +799,11 @@ function draw_level_end()
 			"press ❎ to continue",24,25,1)
 	elseif(config.game_state=="over-bad" or
 		config.game_state=="over-okay") then
-		if(check_new_high_score()) then
-			--high-score-name-entry
-			draw_banner(banner.good,
-				"new high score!",34,-6,5)
-		else
-			draw_banner(banner.bad,
-				"mission failed",34,-6,5)
-			draw_banner(banner.start,
-				"press ❎ to try again",21,5,1)
-		end
+		
+		draw_banner(banner.bad,
+			"mission failed",34,-6,5)
+		draw_banner(banner.start,
+			"press ❎ to try again",21,5,1)
  	end
 end
 
@@ -845,8 +841,17 @@ function draw_game_over()
 		"game over",45,-10,1)
 	draw_banner(banner.subhead,
 		"score: "..score_text,45-((#score_text-1)*1),1,1)
-	draw_banner(banner.start,
-		"press ❎ to reset",31,16,1)
+
+	local slot = check_new_high_score()
+		
+	if(slot) then
+		--high-score-name-entry
+		draw_banner(banner.good,
+			"new high score!",34,12,5)
+	else
+		draw_banner(banner.start,
+			"press ❎ to reset",31,16,1)
+	end
 end
 
 --draw our wee spaceship
@@ -1082,6 +1087,19 @@ function get_score_text(val)
 	return s 
 end 
 
+function load_high_scores()
+	for i=1,3 do
+		local high_score=load_score(i)
+		if(high_score[0]==nil) then 
+			--set some defaults
+			save_score(i,"christopherj","1000")
+			high_score=load_score(i)
+		end
+		high_scores[i]=high_score
+	end
+end
+
+--returns table {1 => name, 2 => score}
 function load_score(slot)
 	local player_name=""
 	local player_score=""
@@ -1140,13 +1158,12 @@ function save_score(slot,player_name,score)
 	end
 end
 
+--remove saved high score data (and anything else)
 function erase_data()
 	for i=0,63 do
 		dset(i,nil)
 	end
 end
-
-
 
 --output cart save data
 function output_data()
