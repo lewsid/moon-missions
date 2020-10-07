@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.0.982
+-- mun lander alpha.0.993
 -- by lewsidboi/smolboigames, 2020
 
-version="a.0.981"
+version="a.0.993"
 
 --game parameters
 config={}
@@ -44,6 +44,7 @@ function _init()
 	cartdata("lewsid-moon-missions")
 
 	--erase_data()
+	output_data()
 
 	load_high_scores()
 
@@ -77,6 +78,8 @@ function _update()
 		end
 	elseif(config.game_state=="high-scores") then
 		if(btnp(❎)) then
+			--reset the game
+	  		init_config()
 			start_game()
 		end
 	elseif(config.game_state=="started") then
@@ -101,13 +104,18 @@ function _update()
 		if(btn(❎)) then
 	  		--reset the moon position
 	 		intro.moon_y=100
-	 		camera()
 	 		cam.x=0
+	 		cam.y=0
+	 		camera(cam.y,cam.y)
+
 	 		--reset the game
 	  		init_config()
 	 	end
 	elseif(config.game_state=="goto-enter-name") then
 		if(btn(❎)) then
+			cam.x=0
+	 		cam.y=0
+	 		camera(cam.y,cam.y)
 			config.game_state="enter-name"
 		end
 	elseif(config.game_state=="enter-name") then
@@ -139,6 +147,17 @@ function _update()
 				name_entry.name=name_entry.name..name_entry.chars[c]
 			elseif(name_entry.name!="") then
 				--cursor is over save button
+
+				--find available slot
+				local slot = check_new_high_score()
+
+				--save score to cart memory
+				save_score(slot,name_entry.name,get_score_text(config.total_score))
+
+				--refresh the highscore list in memory
+				load_high_scores()
+
+				output_data()
 				name_entry.saved=true
 			end
 		end
@@ -170,7 +189,7 @@ function init_config()
 		score=0,
 		total_score=0,
 		score_frame=1,
-		lives=0
+		lives=3
 	}
 end
 
@@ -758,6 +777,7 @@ function draw_alphabet()
 end
 
 function draw_name_entry()
+	cam={x=0,y=0}
 	if(name_entry.saved==false) then
 		print("name: ",20,30,7)
 		draw_cursor()
@@ -765,7 +785,7 @@ function draw_name_entry()
 		draw_name()
 		print("[save]",50,80,6)
 	else
-		print("saved!",50,50,12)
+		config.game_state='high-scores'
 	end
 end
 
@@ -809,8 +829,8 @@ end
 function draw_start_flash(top)
 	--that retro gudness
 	if(upkeep.seconds%2<1) then
-		print("[press ❎ to start]",28,top,1)
-		print("[press ❎ to start]",27,top-1,10)
+		print("[press ❎ to start]",27,top,1)
+		print("[press ❎ to start]",26,top-1,10)
 	end
 end
 
@@ -848,10 +868,8 @@ function draw_interface()
 		cam.x+2,cam.y+8,1)
 	print("distance: "..ceil(pad.x-ship.x+4).."M",
 		cam.x+1,cam.y+7,7)
-	print("lives: "..config.lives,
-		cam.x+2,cam.y+15,1)
-	print("lives: "..config.lives,
-		cam.x+1,cam.y+14,7)
+	--print("lives: ",cam.x+2,cam.y+15,1)
+	--print("lives: ",cam.x+1,cam.y+14,7)
 	print(config.collected.."/"..
 		#pickups,cam.x+113,cam.y+4,1)
 	print(config.collected.."/"..
@@ -865,6 +883,13 @@ function draw_interface()
 		step=2
 	elseif(config.percent_collected>0) then
 		step=1
+	end
+
+	--lives icons
+	if(config.lives>0) then
+		for i=1,config.lives do
+			spr(59,cam.x+102+((i-1)*6),cam.y+10)
+		end
 	end
 	
 	spr(48,cam.x+101,cam.y+2)
@@ -1187,9 +1212,17 @@ end
 function load_high_scores()
 	for i=1,3 do
 		local high_score=load_score(i)
-		if(high_score[0]==nil) then 
+
+		--check for a non-nil name
+		if(tonum(high_score[2])==nil) then 
 			--set some defaults
-			save_score(i,"christopherj","1000")
+			if(i==1) then
+				save_score(i,"christopherj","10000")
+			elseif(i==2) then
+				save_score(i,"christopherj","9000")
+			elseif(i==3) then
+				save_score(i,"christopherj","8000")
+			end
 			high_score=load_score(i)
 		end
 		high_scores[i]=high_score
@@ -1238,7 +1271,7 @@ function save_score(slot,player_name,score)
 				ord(name_parts[i]))
 		else
 			--pad out to 12 chars
-			dset(slot_offset+i,ord(" "))
+			dset((slot_offset+i)-1,ord(" "))
 		end
 	end
 	
@@ -1249,7 +1282,7 @@ function save_score(slot,player_name,score)
 				ord(score_parts[i]))
 		else
 			--pad out 6 chars
-			dset((slot_offset+i+12)
+			dset((slot_offset+i+12)-1
 				,ord(" "))
 		end
 	end
@@ -1267,7 +1300,7 @@ function output_data()
 	local output=""
  	for i=0,63 do
  		output=output..chr(dget(i))
-  	printh(i..": "..chr(dget(i)))
+  		printh(i..": "..chr(dget(i)), 'out.md', false, true)
 	end
 end
 -->8
@@ -1314,7 +1347,7 @@ end
 --[❎] add star icon when all 
 --    pickups are collected
 
---[ ] add high score view
+--[❎] add high score view
 
 --[❎] improve terrain level
 --    variance
@@ -1353,10 +1386,10 @@ __gfx__
 00111100007776000077760000777600007776000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00011000000770000007700000077000000770000005500000055000000550000005500000055000000000000000000000000000000000000000000000000000
 0001100000077000000770000007700000077000005dd500005dd500005dd500005dd500005dd5000000a0000000000000000000000000000000000000000000
-001111000077760000777600007776000077760005d66d5005d66d5005d66d5005d66d5005d66d50000aaa000000000000000000000000000000000000000000
-01111110077777600777776007777760077cc760058888500599995005aaaa5005cccc5005cccc5000aaaaa00000000000000000000000000000000000000000
-11111111777777767777777677cccc7677cccc760d6666d00d6666d00d6666d00d6666d00d6666d0000a0a000000000000000000000000000000000000000000
-111111117777777677cccc7677cccc7677cccc76565665655656656556566565565665655656656500a000a00000000000000000000000000000000000000000
+001111000077760000777600007776000077760005d66d5005d66d5005d66d5005d66d5005d66d50000aaa000007700000000000000000000000000000000000
+01111110077777600777776007777760077cc760058888500599995005aaaa5005cccc5005cccc5000aaaaa00007710000000000000000000000000000000000
+11111111777777767777777677cccc7677cccc760d6666d00d6666d00d6666d00d6666d00d6666d0000a0a000071170000000000000000000000000000000000
+111111117777777677cccc7677cccc7677cccc76565665655656656556566565565665655656656500a000a00001001000000000000000000000000000000000
 01111110077777600777776007777760077777606d6556d66d6556d66d6556d66d6556d66d6556d6000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000d666d66d6ddddddd00000000000000000000000000000000000000000000000000000000
