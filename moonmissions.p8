@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.1.2
+-- mun lander alpha.1.3
 -- by lewsidboi/smolboigames, 2020
 
-version="alpha.1.2"
+version="alpha.1.3"
 
 --game parameters
 config={}
@@ -44,7 +44,7 @@ function _init()
 	cartdata("lewsid-moon-missions")
 
 	--erase_data()
-	output_data()
+	--output_data()
 
 	load_high_scores()
 
@@ -88,7 +88,7 @@ function _update()
 	elseif(config.game_state=="started") then
 		handle_gameplay()
 	elseif(config.game_state=="over-bad") then
-		if(config.lives>0) then
+		if(config.lives>1) then
 			if(btn(❎)) then
 				config.lives-=1
 				init_level(true)
@@ -154,8 +154,10 @@ function _update()
 				--find available slot
 				local slot = check_new_high_score()
 
+				--move former scores down
+
 				--save score to cart memory
-				save_score(slot,name_entry.name,get_score_text(config.total_score))
+				save_score(slot,name_entry.name,config.total_score)
 
 				--refresh the highscore list in memory
 				load_high_scores()
@@ -672,11 +674,7 @@ end
 
 function check_new_high_score()
 	for i=1,#high_scores do
-		printh(raw_high_score, 'out.md', true, true)
-		printh(raw_saved_score, 'out.md', false, true)
-
 		if(config.total_score>high_scores[i][2]) then
-			printh('higher: '..i, 'out.md', false, true)
 			return i
 		end
 	end
@@ -792,8 +790,11 @@ function draw_high_scores()
 	print("high scores",42,40)
 
 	for i=1,3 do
+		--player name
 		print(high_scores[i][1],25,55+((i-1)*10))
-		print(high_scores[i][2],80,55+((i-1)*10))
+
+		--player score
+		print(get_score_text(high_scores[i][2]),80,55+((i-1)*10))
 	end
 
 	--draw ninja logo
@@ -817,14 +818,14 @@ function draw_level_intro()
 		if(config.lives<3 and config.lives>1) then 
 			draw_banner(banner.subhead,
 				"EVEN GENTLER!",38,11,1)
-		elseif(config.lives==0) then
+		elseif(config.lives==1) then
 			draw_banner(banner.subhead,
 				"(LAST LIFE)",42,11,1)
 		else
 			draw_banner(banner.subhead,
 				"(GENTLY)",49,20,1)
 		end
-	elseif(config.lives==0 and config.level>1) then
+	elseif(config.lives==1 and config.level>1) then
 		draw_banner(banner.intro,
 			"level "..config.level,51,0,1)
 		draw_banner(banner.subhead,
@@ -833,7 +834,7 @@ function draw_level_intro()
 		draw_banner(banner.intro,
 			"level "..config.level,51,0,1)
 		draw_banner(banner.subhead,
-			"EVEN GENTLER!",42	,11,1)
+			"EVEN GENTLER!",38,11,1)
 	else
 		draw_banner(banner.intro,
 			"level "..config.level,51,5,1)
@@ -846,7 +847,7 @@ function draw_level_intro()
 
 	start_timer()
 	
-	if(config.level == 1) then
+	if(config.level==1) then
 		if(get_seconds()==3) then	
 			config.game_state="started"
 		end
@@ -1256,15 +1257,17 @@ function load_high_scores()
 	for i=1,3 do
 		local high_score=load_score(i)
 
+		--printh(high_score[2], 'out.md', false, true)
+
 		--check for a non-nil name
-		if(tonum(high_score[2])==nil) then 
+		if(high_score[2]==0) then 
 			--set some defaults
 			if(i==1) then
-				save_score(i,"christopherj","10000")
+				save_score(1,"christopherj",shr(10000,16))
 			elseif(i==2) then
-				save_score(i,"christopherj","9000")
+				save_score(2,"christopherj",shr(9000,16))
 			elseif(i==3) then
-				save_score(i,"christopherj","8000")
+				save_score(3,"christopherj",shr(8000,16))
 			end
 			high_score=load_score(i)
 		end
@@ -1284,11 +1287,11 @@ function load_score(slot)
 		slot_offset+slot_length-1 do
 		if(pos<=12) then
 			player_name=player_name..chr(dget(i))
-		elseif(pos>12) then
-	 		player_score=player_score..chr(dget(i))
 		end
 		pos+=1
 	end
+
+	player_score=dget(slot_offset+12)
 
 	local output={player_name,player_score}
 
@@ -1319,16 +1322,7 @@ function save_score(slot,player_name,score)
 	end
 	
 	--same treatment for score
-	for i=1,6 do
-		if(score_parts[i]) then
-			dset((slot_offset+i+12)-1,
-				ord(score_parts[i]))
-		else
-			--pad out 6 chars
-			dset((slot_offset+i+12)-1
-				,ord(" "))
-		end
-	end
+	dset((slot_offset+12), score)
 end
 
 --remove saved high score data (and anything else)
@@ -1400,7 +1394,7 @@ end
 --[ ] add credits if level game
 --    is beaten
 
---[ ] create some minimal
+--[❎] create some minimal
 --	  music
 
 --[ ] add fuel pickups
