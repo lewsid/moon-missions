@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander alpha.1.4
+-- mun lander alpha.1.5
 -- by lewsidboi/smolboigames, 2020
 
-version="alpha.1.4"
+version="alpha.1.5"
 
 --game parameters
 config={}
@@ -43,8 +43,8 @@ name_entry={
 function _init()
 	cartdata("lewsid-moon-missions")
 
-	--erase_data()
-	--output_data()
+	erase_data()
+	output_data()
 
 	load_high_scores()
 
@@ -83,7 +83,6 @@ function _update()
 		if(btnp(❎)) then
 			--reset the game
 	  		init_config()
-	  		sfx(11)
 			start_game()
 		end
 	elseif(config.game_state=="started") then
@@ -103,7 +102,6 @@ function _update()
 			config.level+=1
 			init_level(false)
 			reset_banner()
-			sfx(11)
 		end
 	elseif(config.game_state=="game-over") then
 		if(btn(❎)) then
@@ -155,6 +153,14 @@ function _update()
 
 				--find available slot
 				local slot = check_new_high_score()
+
+				--shift other scores down as needed
+				if(slot==1) then
+					move_score_down(2)
+					move_score_down(1)
+				elseif(slot==2) then
+					move_score_down(2)
+				end
 
 				--save score to cart memory
 				save_score(slot,name_entry.name,config.total_score)
@@ -675,7 +681,7 @@ end
 
 function check_new_high_score()
 	for i=1,#high_scores do
-		if(config.total_score>high_scores[#high_scores-i][2]) then
+		if(config.total_score>high_scores[i][2]) then
 			return i
 		end
 	end
@@ -1297,6 +1303,11 @@ function load_score(slot)
 	local output={player_name,player_score}
 
 	return output
+end
+
+function move_score_down(slot)
+	score_data = load_score(slot)
+	save_score(slot+1,score_data[1],score_data[2])
 end
 
 --save the name and score
