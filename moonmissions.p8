@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander BETA.2.2
+-- mun lander 2.4
 -- by lewsidboi/smolboigames, 2020
 
-version="BETA.2.2"
+version="2.4"
 
 --game parameters
 config={}
@@ -24,9 +24,7 @@ intro={moon_sprite=64,moon_y=100,
 	logo_sprite=192,logo_width=9,
 	logo_height=3,logo_shown=0,
 	logo_flash=10}
-saucer={
-	sprite=218
-}
+saucer={}
 logo={}
 flag={sprite=2,drop_sprite=7}
 banner={intro=12,subhead=1,start,
@@ -42,8 +40,9 @@ name_entry={}
 function _init()
 	cartdata("lewsid-moon-missions")
 
+	--debugging
 	--erase_data()
-	output_data()
+	--output_data()
 
 	load_high_scores()
 
@@ -90,7 +89,7 @@ function _update()
 		handle_gameplay()
 	elseif(config.game_state=="over-bad") then
 		if(config.lives>1) then
-			if(btn(❎)) then
+			if(btnp(❎)) then
 				config.lives-=1
 				init_level(true)
 				reset_banner()
@@ -99,13 +98,28 @@ function _update()
 			config.game_state="game-over"
 		end
 	elseif(config.game_state=="over-good") then
-		if(btn(❎)) then
-			config.level+=1
-			init_level(false)
-			reset_banner()
+		if(btnp(❎)) then
+			if(config.level==20) then
+				config.game_state="credits"
+			else
+				config.level+=1
+				init_level(false)
+				reset_banner()
+			end
 		end
+	elseif(config.game_state=="credits") then
+		if(btnp(❎)) then
+			--reset the moon position
+	 		intro.moon_y=100
+	 		cam.x=0
+	 		cam.y=0
+	 		camera(cam.y,cam.y)
+
+	 		--reset the game
+	  		init_config()
+	  	end
 	elseif(config.game_state=="game-over") then
-		if(btn(❎)) then
+		if(btnp(❎)) then
 	  		--reset the moon position
 	 		intro.moon_y=100
 	 		cam.x=0
@@ -116,7 +130,7 @@ function _update()
 	  		init_config()
 	 	end
 	elseif(config.game_state=="goto-enter-name") then
-		if(btn(❎)) then
+		if(btnp(❎)) then
 			init_name_entry()
 			cam.x=0
 	 		cam.y=0
@@ -218,115 +232,172 @@ function init_levels()
 		pad_x=150,
 		pad_y=70,
 		pickups=#levels+1,
-		jag_rate=22
+		jag_rate=22,
+		saucer_tripwire_x=20,
+		saucer_dx=-1,
+		saucer_y=20
 	}
 	levels[3]={
 		pad_x=170,
 		pad_y=80,
 		pickups=#levels+1,
-		jag_rate=30
+		jag_rate=30,
+		saucer_tripwire_x=25,
+		saucer_dx=-1,
+		saucer_y=20
 	}
 	levels[4]={
 		pad_x=200,
 		pad_y=65,
 		pickups=#levels+1,
-		jag_rate=18
+		jag_rate=18,
+		saucer_tripwire_x=30,
+		saucer_dx=-1,
+		saucer_y=5
 	}
 	levels[5]={
 		pad_x=220,
 		pad_y=90,
 		pickups=#levels+1,
-		jag_rate=25
+		jag_rate=25,
+		saucer_tripwire_x=60,
+		saucer_dx=-2,
+		saucer_y=30
 	}
 	levels[6]={
 		pad_x=250,
 		pad_y=50,
 		pickups=#levels+1,
-		jag_rate=15
+		jag_rate=15,
+		saucer_tripwire_x=80,
+		saucer_dx=-2,
+		saucer_y=5
 	}
 	levels[7]={
 		pad_x=280,
 		pad_y=60,
 		pickups=#levels+1,
-		jag_rate=10
+		jag_rate=10,
+		saucer_tripwire_x=90,
+		saucer_dx=-2,
+		saucer_y=5
 	}
 	levels[8]={
 		pad_x=400,
 		pad_y=70,
 		pickups=#levels+1,
-		jag_rate=50
+		jag_rate=50,
+		saucer_tripwire_x=130,
+		saucer_dx=-2,
+		saucer_y=10
 	}
 	levels[9]={
 		pad_x=500,
 		pad_y=55,
 		pickups=#levels+1,
-		jag_rate=30
+		jag_rate=30,
+		saucer_tripwire_x=250,
+		saucer_dx=-2,
+		saucer_y=10
 	}
 	levels[10]={
 		pad_x=600,
 		pad_y=85,
 		pickups=#levels+1,
-		jag_rate=100
+		jag_rate=100,
+		saucer_tripwire_x=300,
+		saucer_dx=-3,
+		saucer_y=15
 	}
 	levels[11]={
 		pad_x=800,
 		pad_y=81,
 		pickups=#levels+1,
-		jag_rate=90
+		jag_rate=90,
+		saucer_tripwire_x=450,
+		saucer_dx=-3,
+		saucer_y=20
 	}
 	levels[11]={
 		pad_x=1000,
 		pad_y=51,
 		pickups=#levels+1,
-		jag_rate=65
+		jag_rate=65,
+		saucer_tripwire_x=600,
+		saucer_dx=-3,
+		saucer_y=5
 	}
 	levels[12]={
 		pad_x=1500,
 		pad_y=61,
 		pickups=#levels+1,
-		jag_rate=70
+		jag_rate=70,
+		saucer_tripwire_x=1100,
+		saucer_dx=-3,
+		saucer_y=2
 	}
 	levels[14]={
 		pad_x=2000,
 		pad_y=82,
 		pickups=#levels+1,
-		jag_rate=100
+		jag_rate=100,
+		saucer_tripwire_x=600,
+		saucer_dx=-3,
+		saucer_y=20
 	}
 	levels[15]={
 		pad_x=2200,
 		pad_y=57,
 		pickups=#levels+1,
-		jag_rate=140
+		jag_rate=140,
+		saucer_tripwire_x=1000,
+		saucer_dx=-4,
+		saucer_y=1
 	}
 	levels[16]={
 		pad_x=2300,
 		pad_y=53,
 		pickups=#levels+1,
-		jag_rate=100
+		jag_rate=100,
+		saucer_tripwire_x=1400,
+		saucer_dx=-4,
+		saucer_y=5
 	}
 	levels[17]={
 		pad_x=2400,
 		pad_y=61,
 		pickups=#levels+1,
-		jag_rate=101
+		jag_rate=101,
+		saucer_tripwire_x=1600,
+		saucer_dx=-4,
+		saucer_y=7
 	}
 	levels[18]={
 		pad_x=2500,
 		pad_y=63,
 		pickups=#levels+1,
-		jag_rate=105
+		jag_rate=105,
+		saucer_tripwire_x=1900,
+		saucer_dx=-4,
+		saucer_y=1
 	}
 	levels[19]={
 		pad_x=2800,
 		pad_y=65,
 		pickups=#levels+1,
-		jag_rate=110
+		jag_rate=110,
+		saucer_tripwire_x=2000,
+		saucer_dx=-5,
+		saucer_y=-20
 	}
 	levels[20]={
-		pad_x=3000,
+		pad_x=3500,
 		pad_y=70,
 		pickups=#levels+1,
-		jag_rate=115
+		jag_rate=115,
+		saucer_tripwire_x=2500,
+		saucer_dx=-5,
+		saucer_y=-40
 	}
 end
 
@@ -393,6 +464,27 @@ function init_ship()
 	}
 
 	return ship
+end
+
+
+function init_saucer()
+	saucer={
+		sprite=0,
+		sprite_a=218,
+		sprite_b=234,
+		width=16,
+		height=8,
+		intersect_x_offset=11,
+		intersect_y_offset=-2,
+		blit_w=4,
+		blit_y=1,
+		x=levels[config.level].pad_x,
+		y=levels[config.level].saucer_y,
+		dx=levels[config.level].saucer_dx,
+		dy=0
+	}
+
+	return saucer
 end
 
 --procedurally generate terrain
@@ -472,6 +564,10 @@ function init_level(preserve)
 	cam={x=0,y=0}
 	init_ship(config.start_x,config.start_y,0,.2)
 	init_pad()
+
+	if(config.level>1) then
+		init_saucer()
+	end
 	config.collected=0
 	config.percent_collected=0
 	
@@ -517,6 +613,13 @@ function handle_gameplay()
 		
 	control_ship()
 	move_ship()
+
+	--no saucer on level 1
+	if(config.level>1) then
+		move_saucer()
+		detect_saucer()
+	end
+
 	detect_pickup()
 end
 
@@ -528,7 +631,7 @@ function control_ship()
 
 	--if we are still above ground
 	if(above_ground(ship) and
-		not on_pad()) then
+		not on_pad() and ship.alive==1) then
 		--left
 		if (btn(0) and ship.fuel>0) then
 			ship.dx-=config.thrust
@@ -574,6 +677,20 @@ function control_ship()
 	end
 end
 
+--detect if ship has collided
+--with saucer
+function detect_saucer()
+	if(collide(ship,saucer)) then
+		ship.alive=0
+		ship.sprite=205
+		reset_thrust()
+		sfx(1)
+		sfx(2)
+		config.game_state="over-bad"
+		reset_banner()
+	end
+end
+
 --detect if ship has collided 
 --with/collected a pickup
 function detect_pickup()
@@ -587,6 +704,10 @@ function detect_pickup()
 			end
 		end
 	end
+end
+
+function move_saucer()
+	saucer.x+=saucer.dx
 end
 
 --update ship position
@@ -739,6 +860,7 @@ function draw_start()
 		draw_pad()
 		draw_ground()
 		draw_pickups()
+		draw_saucer()
 	elseif(config.game_state=="game-intro") then
 		--intro moon slide
 		cls(0)
@@ -757,7 +879,8 @@ function draw_start()
 		draw_interface()
 		draw_level_end()
 	elseif(config.game_state=="game-over" or 
-		config.game_state=="goto-enter-name") then
+		config.game_state=="goto-enter-name" or
+		config.game_state=="credits") then
 		--no more lives
 		draw_interface()
 		draw_game_over()
@@ -833,7 +956,7 @@ function draw_level_intro()
 	
 	if(config.level==1) then 
 		draw_banner(banner.intro,
-			"level "..config.level,51,0,1)
+			"level "..config.level,49,0,1)
 		draw_banner(banner.subhead,
 			"TOUCH DOWN ON THE LANDING PAD!",5,11,1)
 		if(config.lives<3 and config.lives>1) then 
@@ -846,19 +969,24 @@ function draw_level_intro()
 			draw_banner(banner.subhead,
 				"(GENTLY)",49,20,1)
 		end
+	elseif(config.level==2) then
+		draw_banner(banner.intro,
+			"level "..config.level,49,0,1)
+		draw_banner(banner.subhead,
+			"AVOID THE SAUCER!",30,11,1)
+	elseif(config.level==20) then
+		draw_banner(banner.intro,
+			"level "..config.level,49,0,1)
+		draw_banner(banner.subhead,
+			"(LAST LEVEL)",40,11,1)
 	elseif(config.lives==1 and config.level>1) then
 		draw_banner(banner.intro,
-			"level "..config.level,51,0,1)
+			"level "..config.level,49,0,1)
 		draw_banner(banner.subhead,
 			"(LAST LIFE)",42,11,1)
-	elseif(config.lives<3 and config.level<3) then
-		draw_banner(banner.intro,
-			"level "..config.level,51,0,1)
-		draw_banner(banner.subhead,
-			"EVEN GENTLER!",38,11,1)
 	else
 		draw_banner(banner.intro,
-			"level "..config.level,51,5,1)
+			"level "..config.level,49,5,1)
 	end
 
 	--draw remaining lives
@@ -1031,8 +1159,14 @@ end
 function draw_game_over()
 	local score_text=get_score_text(config.total_score)
 
-	draw_banner(banner.bad,
-		"game over",45,-10,1)
+	if(config.level==20 and config.lives>0) then
+		draw_banner(banner.bad,
+			"THANKS FOR PLAYING!",27,-10,1)
+	else
+		draw_banner(banner.bad,
+			"game over",45,-10,1)
+	end
+
 	draw_banner(banner.subhead,
 		"score: "..score_text,45-((#score_text-1)*1),1,1)
 
@@ -1051,14 +1185,28 @@ function draw_game_over()
 	end
 end
 
+function draw_saucer()
+	if(saucer.sprite==saucer.sprite_a) then
+		saucer.sprite=saucer.sprite_b
+	else
+		saucer.sprite=saucer.sprite_a
+	end
+	spr(saucer.sprite,saucer.x,saucer.y,saucer.blit_w,saucer.blit_y)
+end
+
 --draw our wee spaceship
 function draw_ship()
 	--ship crashed, burn
 	if(ship.alive==0) then
+		--alternate between crash sprites
 		if(ship.sprite==18) then
 			ship.sprite=17
-		else 
+		elseif(ship.sprite==17) then
 			ship.sprite=18
+		elseif(ship.sprite==205) then
+			ship.sprite=206
+		elseif(ship.sprite==206) then
+			ship.sprite=205
 		end
 	else
 		--ship is moving up
@@ -1258,12 +1406,23 @@ end
 --return true if object1 has 
 --collided with object2
 function collide(object1,object2)
+	object_2_x_offset=0
+	object_2_y_offset=0
+
+	if(object2.intersect_x_offset) then
+		object_2_x_offset=object2.intersect_x_offset
+	end
+
+	if(object2.intersect_y_offset) then
+		object_2_y_offset=object2.intersect_y_offset
+	end
+	
 	return intersect(object1.x,
 		object1.x+object1.width,
-		object2.x,object2.x+object2.width)
+		object2.x+object_2_x_offset,object2.x+object2.width)
 		and
 		intersect(object1.y,object1.y+object1.height,
-		object2.y,object2.y+object2.height)
+		object2.y+object_2_y_offset,object2.y+object_2_y_offset+object2.height)
 end
 
 --https://www.lexaloffle.com/bbs/?pid=22677
@@ -1534,29 +1693,37 @@ __gfx__
 076666666666666667666666666656666666666666657777777775766666666566616666666665665717777777577777757777775666566665556661666656d0
 076666666766666666666666666666666676666666665777777756666666666666666656666666665777777777777777777775775666666666666666666666d0
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000070000007000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000077000077000000000000000000000000000000000000
-0000000000000cccccccccccccccccccccccccccccccccccccccccccccc000000000000000000000077777700777777000000000000000000000000000000000
-000000000000c0000000000000000000000000000000000000000000000c00000000000000000000001177100077111100000000000000000000000000000000
-000000000000c0011111111111111111111111111111111111111111100c00000000000000000000000071000017000000000000000000000000000000000000
-000000000000c0100000000000000000000000000000000000000000010c00000000000000000000000010000001000000000000000000000000000000000000
-000000000000c0100577777777777700057777000577770057777700010c00000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000070000007000000000000000aa0000009900000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000007700007700000000000000a95900009a5a0000000000
+0000000000000cccccccccccccccccccccccccccccccccccccccccccccc000000000000000000000077777700777777000000000099a65900aa965a000000000
+000000000000c0000000000000000000000000000000000000000000000c000000000000000000000011771000771111000000000566dca00566dc9000000000
+000000000000c0011111111111111111111111111111111111111111100c0000000000000000000000007100001700000000000006dc665006dc665000000000
+000000000000c0100000000000000000000000000000000000000000010c000000000000000000000000100000010000000000000a666a90096669a000000000
+000000000000c0100577777777777700057777000577770057777700010c000000000000000000000000000000000000000000006596595665a65a5600000000
 000000000000c0105777777777777770577057705770577057705770010c00000000000000000000000000000000000000000000000000000000000000000000
-00000cccccccc0105777005770057770577057705770577057705770010cccccccc0000000000000000000000000000000000000000000000000000000000000
-0000c00000000010577700577005777057705770577057705770577001000000000c000000000000000000000000000000000000000000000000000000000000
-0000c00111111110057700577005770005777700057777000570570001111111100c000000000000000000000000000000000000000000000000000000000000
-0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000000000000000000000000000000000000000000000
-0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000000000000000000000000000000000000000000000
-0000c01060000060066666000666600066660066666000666000600060006666010c000000000000000000000000000000000000000000000000000000000000
-0000c01066000660000600006600000660000000600006000600660060066000010c000000000000000000000000000000000000000000000000000000000000
+00000cccccccc0105777005770057770577057705770577057705770010cccccccc0000000000000000000000000005555000000000000000000000000000000
+0000c00000000010577700577005777057705770577057705770577001000000000c000000000000000000000005557777555000000000000000000000000000
+0000c00111111110057700577005770005777700057777000570570001111111100c000000000000000000005556666666666555000000000000000000000000
+0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000056666566566566666500000000000000000000000
+0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000005556666666666555000000000000000000000000
+0000c01060000060066666000666600066660066666000666000600060006666010c000000000000000000001115555555555111000000000000000000000000
+0000c01066000660000600006600000660000000600006000600660060066000010c0000000000000000000000011cc11cc11000000000000000000000000000
 0000c01066606660000600000666000066600000600006000600606060006660010c000000000000000000000000000000000000000000000000000000000000
 0000c01060666060000600000006600000660000600006000600600660000066010c000000000000000000000000005555000000000000000000000000000000
 0000c01060060060066666006666000666600066666000666000600060066660010c000000000000000000000005557777555000000000000000000000000000
 0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000005556666666666555000000000000000000000000
-0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000056666666666666666500000000000000000000000
+0000c01000000000000000000000000000000000000000000000000000000000010c000000000000000000056666656656656666500000000000000000000000
 0000c00111111111111111111111111111111111111111111111111111111111100c000000000000000000005556666666666555000000000000000000000000
-0000c00000000000000000000000000000000000000000000000000000000000000c000000000000000000000005555555555000000000000000000000000000
-00000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc0000000000000000000000000000000000000000000000000000000000000
+0000c00000000000000000000000000000000000000000000000000000000000000c000000000000000000001115555555555111000000000000000000000000
+00000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc00000000000000000000000011cc11cc11000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000550000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005dd5000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005d66d500000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000056cc6500000000000000000
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d6666d00000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000565665650000000000000000
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006d6556d60000000000000000
 __label__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
