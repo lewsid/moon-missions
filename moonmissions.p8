@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander 2.4
+-- mun lander 2.5
 -- by lewsidboi/smolboigames, 2020
 
-version="2.4"
+version="2.5"
 
 --game parameters
 config={}
@@ -102,6 +102,7 @@ function _update()
 			if(config.level==20) then
 				config.game_state="credits"
 			else
+				sfx(11)
 				config.level+=1
 				init_level(false)
 				reset_banner()
@@ -1533,67 +1534,6 @@ function output_data()
   		printh(i..": "..chr(dget(i)), 'out.md', false, true)
 	end
 end
--->8
---todos
-
---[❎] fix scoring bug (int too small)
---     https://www.lexaloffle.com/bbs/?pid=22677
-
---[❎] fix ground line draw
-
---[❎] fix star draw below y=0
-
---[❎] fix game-over reset
---     force moon animation to
---     complete
-
---[❎] add lives (x3)
-
---[❎] add game over screen
---    with score
-
---[❎] fix level re-init after
---    mission fail
-
---[❎] land speed indicator 
-
---[❎] incorporate distnace 
---    into scoring
-
---[❎] fix pad spawn bug
-
---[ ] fix pickup spawning 
---    inside terrain bug
---    back, but rare
-
---[❎] fix pad spawning in 
---     air bug
-
---[❎] finish contructing levels
-
---[❎] Follow camera y when 
---above the fold
-
---[❎] add star icon when all 
---    pickups are collected
-
---[❎] add high score view
-
---[❎] improve terrain level
---    variance
-
---[❎] detect crash on y speed
-
---[ ] add credits if level game
---    is beaten
-
---[❎] create some minimal
---	  music
-
---[ ] add fuel pickups
-
---[❎] add help text to level 1
---	  music
 
 __gfx__
 00000000000000000000000000000000000aa000000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1624,7 +1564,7 @@ __gfx__
 000110000007700000077000000770000007700000055000000550000005500000055000000550000000000000000000000000000000500500000000c00c0000
 0001100000077000000770000007700000077000005dd500005dd500005dd500005dd500005dd5000000a00000000000000000000055500500000000c00ccc00
 001111000077760000777600007776000077760005d66d5005d66d5005d66d5005d66d5005d66d50000aaa0000077000000770000555555500000000ccccccc0
-01111110077777600777776007777760077cc760058888500599995005aaaa5005cccc5005cccc5000aaaaa000077100000775005005500500000000c00cc00c
+01111110077777600777776007777760077cc76005aaaa500599995005aaaa5005cccc5005cccc5000aaaaa000077100000775005005500500000000c00cc00c
 11111111777777767777777677cccc7677cccc760d6666d00d6666d00d6666d00d6666d00d6666d0000a0a000071170000755700005555000000000000cccc00
 111111117777777677cccc7677cccc7677cccc76565665655656656556566565565665655656656500a000a0000100100005005005500550000000000cc00cc0
 01111110077777600777776007777760077777606d6556d66d6556d66d6556d66d6556d66d6556d60000000000000000000000005500005500000000cc0000cc
