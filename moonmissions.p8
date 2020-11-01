@@ -4,7 +4,7 @@ __lua__
 -- mun lander v2.7
 -- by lewsidboi/smolboigames, 2020
 
-version="v2.7"
+version="V2.7"
 
 --game parameters
 config={}

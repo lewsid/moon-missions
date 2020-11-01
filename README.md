@@ -19,3 +19,7 @@ through each level's "data" waypoints. Keep an eye out for alien interface!
 Controls:
 ---------
 Up/Left/Right to control directional thrusters
+
+Credits:
+--------
+This game was designed and created by me [lewsid.com].
