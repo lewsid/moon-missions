@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander v2.6
+-- mun lander v2.7
 -- by lewsidboi/smolboigames, 2020
 
-version="v2.6"
+version="v2.7"
 
 --game parameters
 config={}
@@ -1082,20 +1082,37 @@ end
 --draw game interface
 function draw_interface()
 	--status
-	print("fuel: "..ship.fuel,
+	--print("fuel: "..ship.fuel,
+		--cam.x+2,cam.y+1,1)
+	--print("fuel: "..ship.fuel,
+		--cam.x+1,cam.y,7)
+	print("fuel: ",
 		cam.x+2,cam.y+1,1)
-	print("fuel: "..ship.fuel,
+	print("fuel: ",
 		cam.x+1,cam.y,7)
+
+	local ratio=ship.fuel/100
+	local bar=cam.x+25+flr(44*ratio)
+
+	rectfill(cam.x+25,cam.y,cam.x+70,cam.y+5,1)
+
+	if(ratio*100<30 and ratio*100>10 and ratio>0) then
+		rectfill(cam.x+25,cam.y,bar,cam.y+4,10)
+	elseif(ratio*100<10 and ratio>0) then
+		rectfill(cam.x+25,cam.y,bar,cam.y+4,8)
+	elseif(ratio>0) then 
+		rectfill(cam.x+25,cam.y,bar,cam.y+4,7)
+	end
 		
 	local arrow_direction="-▶"
 	if(ceil(pad.x-ship.x+4)<0) then
 		arrow_direction="◀-"
 	end
 
-	print("pad: "..ceil(pad.x-ship.x+4).."M "..arrow_direction,
-		cam.x+2,cam.y+8,1)
-	print("pad: "..ceil(pad.x-ship.x+4).."M "..arrow_direction,
-		cam.x+1,cam.y+7,7)
+	print("pad: "..abs(ceil(pad.x-ship.x+4)).."M "..arrow_direction,
+		cam.x+6,cam.y+9,1)
+	print("pad: "..abs(ceil(pad.x-ship.x+4)).."M "..arrow_direction,
+		cam.x+5,cam.y+8,7)
 
 	--if(ceil(pad.x-ship.x+4)>0) then
 		--spr(202,cam.x+)
