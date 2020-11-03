@@ -26,7 +26,7 @@ Todos
 
 --[❎] fix pad spawn bug
 
---[ ] fix pickup spawning 
+--[❎] fix pickup spawning 
 --    inside terrain bug
 --    back, but rare
 
@@ -48,13 +48,13 @@ Todos
 
 --[❎] detect crash on y speed
 
---[ ] add credits if level game
+--[❎] add credits if level game
 --    is beaten
 
 --[❎] create some minimal
 --	  music
 
---[ ] add fuel pickups
+--[❎] add fuel pickups
 
 --[❎] add help text to level 1
 --	  music
