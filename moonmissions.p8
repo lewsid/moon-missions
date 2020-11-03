@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander v2.9
+-- mun lander v2.91
 -- by lewsidboi/smolboigames, 2020
 
-version="V2.9"
+version="V2.91"
 
 --game parameters
 config={}
@@ -90,6 +90,9 @@ function _update()
 	elseif(config.game_state=="started") then
 		handle_gameplay()
 	elseif(config.game_state=="over-bad") then
+		--stop saucer sound if on screen
+		sfx(-2,2)
+
 		if(config.lives>1) then
 			if(btnp(❎)) then
 				sfx(11)
