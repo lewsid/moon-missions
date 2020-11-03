@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander v2.7
+-- mun lander v2.9
 -- by lewsidboi/smolboigames, 2020
 
-version="V2.7"
+version="V2.9"
 
 --game parameters
 config={}
@@ -16,9 +16,11 @@ ground_lines={}
 cam={x=0,y=0}
 stars={}
 pad={}
-pickup={height=5,width=4,sprite=35,
+data_pickup={height=5,width=4,sprite=35,
 	frames=8,frame=1}
-pickups={}
+fuel_pickup={height=6,width=6,sprite=240,
+	frames=10,frame=1}
+data_pickups={}
 intro={moon_sprite=64,moon_y=100,
 	moon_width=16,moon_height=9,
 	logo_sprite=192,logo_width=9,
@@ -99,6 +101,9 @@ function _update()
 			config.game_state="game-over"
 		end
 	elseif(config.game_state=="over-good") then
+		--stop saucer sound if on screen
+		sfx(-2,2)
+
 		if(btnp(❎)) then
 			if(config.level==20) then
 				config.game_state="credits"
@@ -121,6 +126,9 @@ function _update()
 	  		init_config()
 	  	end
 	elseif(config.game_state=="game-over") then
+		--stop saucer sound if on screen
+		sfx(-2,2)
+
 		if(btnp(❎)) then
 	  		--reset the moon position
 	 		intro.moon_y=100
@@ -186,7 +194,6 @@ function _update()
 				--refresh the highscore list in memory
 				load_high_scores()
 
-				output_data()
 				name_entry.saved=true
 			end
 		end
@@ -227,13 +234,13 @@ function init_levels()
 	levels[1]={
 		pad_x=110,  --distance to landing pad
 		pad_y=90,   --height of landing pad (keep between 50 and 90)
-		pickups=#levels+1,  --number of pickups
+		data_pickups=#levels+1,  --number of pickups
 		jag_rate=35 --terrain jagginess (higher=flatter, lower than 5 causes mem issues)
 	}
 	levels[2]={
 		pad_x=150,
 		pad_y=70,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=22,
 		saucer_tripwire_x=20,
 		saucer_dx=-1,
@@ -242,7 +249,7 @@ function init_levels()
 	levels[3]={
 		pad_x=170,
 		pad_y=80,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=30,
 		saucer_tripwire_x=25,
 		saucer_dx=-1,
@@ -251,7 +258,7 @@ function init_levels()
 	levels[4]={
 		pad_x=200,
 		pad_y=65,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=18,
 		saucer_tripwire_x=100,
 		saucer_dx=-1,
@@ -260,7 +267,7 @@ function init_levels()
 	levels[5]={
 		pad_x=220,
 		pad_y=90,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=25,
 		saucer_tripwire_x=60,
 		saucer_dx=-2,
@@ -269,7 +276,7 @@ function init_levels()
 	levels[6]={
 		pad_x=250,
 		pad_y=50,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=15,
 		saucer_tripwire_x=150,
 		saucer_dx=-2,
@@ -278,7 +285,7 @@ function init_levels()
 	levels[7]={
 		pad_x=280,
 		pad_y=60,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=40,
 		saucer_tripwire_x=140,
 		saucer_dx=-2,
@@ -287,7 +294,7 @@ function init_levels()
 	levels[8]={
 		pad_x=400,
 		pad_y=70,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=50,
 		saucer_tripwire_x=280,
 		saucer_dx=-2,
@@ -296,7 +303,7 @@ function init_levels()
 	levels[9]={
 		pad_x=500,
 		pad_y=55,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=30,
 		saucer_tripwire_x=340,
 		saucer_dx=-2,
@@ -305,7 +312,7 @@ function init_levels()
 	levels[10]={
 		pad_x=600,
 		pad_y=85,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=100,
 		saucer_tripwire_x=500,
 		saucer_dx=-3,
@@ -314,7 +321,7 @@ function init_levels()
 	levels[11]={
 		pad_x=800,
 		pad_y=81,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=90,
 		saucer_tripwire_x=450,
 		saucer_dx=-3,
@@ -323,7 +330,7 @@ function init_levels()
 	levels[11]={
 		pad_x=1000,
 		pad_y=51,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=65,
 		saucer_tripwire_x=650,
 		saucer_dx=-3,
@@ -332,7 +339,7 @@ function init_levels()
 	levels[12]={
 		pad_x=1500,
 		pad_y=61,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=70,
 		saucer_tripwire_x=1100,
 		saucer_dx=-3,
@@ -341,7 +348,7 @@ function init_levels()
 	levels[14]={
 		pad_x=2000,
 		pad_y=82,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=100,
 		saucer_tripwire_x=600,
 		saucer_dx=-3,
@@ -350,7 +357,7 @@ function init_levels()
 	levels[15]={
 		pad_x=2200,
 		pad_y=57,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=140,
 		saucer_tripwire_x=2000,
 		saucer_dx=-4,
@@ -359,7 +366,7 @@ function init_levels()
 	levels[16]={
 		pad_x=2300,
 		pad_y=53,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=100,
 		saucer_tripwire_x=1400,
 		saucer_dx=-4,
@@ -368,7 +375,7 @@ function init_levels()
 	levels[17]={
 		pad_x=2400,
 		pad_y=61,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=101,
 		saucer_tripwire_x=1600,
 		saucer_dx=-4,
@@ -377,7 +384,7 @@ function init_levels()
 	levels[18]={
 		pad_x=2500,
 		pad_y=63,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=105,
 		saucer_tripwire_x=1900,
 		saucer_dx=-4,
@@ -386,7 +393,7 @@ function init_levels()
 	levels[19]={
 		pad_x=2800,
 		pad_y=65,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=110,
 		saucer_tripwire_x=2000,
 		saucer_dx=-5,
@@ -395,7 +402,7 @@ function init_levels()
 	levels[20]={
 		pad_x=3500,
 		pad_y=70,
-		pickups=#levels+1,
+		data_pickups=#levels+1,
 		jag_rate=115,
 		saucer_tripwire_x=2500,
 		saucer_dx=-5,
@@ -416,25 +423,34 @@ end
 
 --generate pickups for our level
 function init_pickups()
-	if(levels[config.level].pickups>0) then
+	--spawn data pickups in based on level setting
+	if(levels[config.level].data_pickups>0) then
 		--set the base x position
-		spawn_x=flr((pad.x-50)/levels[config.level].pickups)
+		local spawn_x=flr((pad.x-50)/levels[config.level].data_pickups)
 		
-		--we spawn pickups at random
+		--we spawn data_pickups at random
 		--intervals but not overlapping
-		for i=1,levels[config.level].pickups do
-			pickups[i]= {
-				sprite=pickup.sprite,
-				frame=pickup.frame,
-				frames=pickup.frames,
+		for i=1,levels[config.level].data_pickups do
+			data_pickups[i]= {
+				sprite=data_pickup.sprite,
+				frame=data_pickup.frame,
+				frames=data_pickup.frames,
 				x=rnd(spawn_x)+((i*spawn_x)-1),
 				y=10+rnd(80),
-				width=pickup.width,
-				height=pickup.height,
+				width=data_pickup.width,
+				height=data_pickup.height,
 				is_active=true
 			}
 		end
 	end
+
+	--each level gets one fuel pickup
+	--that spawns somewhere between
+	--halfway and the pad
+	local spawn_x=ceil(levels[config.level].pad_x/2)
+	fuel_pickup.x=ceil(spawn_x+rnd(pad.x-spawn_x))
+	fuel_pickup.y=10+rnd(80)
+	fuel_pickup.is_active=true
 end
 
 --set up our ship with some
@@ -477,9 +493,9 @@ function init_saucer()
 		sprite_a=218,
 		sprite_b=234,
 		width=16,
-		height=8,
+		height=6,
 		intersect_x_offset=11,
-		intersect_y_offset=-2,
+		intersect_y_offset=0,
 		blit_w=4,
 		blit_y=1,
 		x=levels[config.level].pad_x,
@@ -582,14 +598,17 @@ function init_level(preserve)
 		config.last_edge=0
 		death_points={}
  		ground_lines={}
- 		--stars={}
- 		pickups={}
+ 		data_pickups={}
+ 		fuel_pickup.is_active=false
  		init_stars()		
 		init_ground()
 		init_pickups()
 	else
-		for i=1,#pickups do
-			pickups[i].is_active=true
+		--reset pickups to original locations
+		fuel_pickup.is_active=true
+
+		for i=1,#data_pickups do
+			data_pickups[i].is_active=true
 	 	end
 	end
 end
@@ -671,7 +690,7 @@ function control_ship()
 		end
 
 		--up
-		if(btn(2) and ship.fuel>0) then
+		if(btn(2) or btn(❎) and ship.fuel>0) then
 			ship.dy-=config.thrust
 			ship.up_sprite=4+rnd(2)
 			ship.fuel-=1
@@ -702,14 +721,22 @@ end
 --detect if ship has collided 
 --with/collected a pickup
 function detect_pickup()
-	for i=1,#pickups do
-		if(pickups[i].is_active) then
-			if(collide(ship,pickups[i])) then
+	for i=1,#data_pickups do
+		if(data_pickups[i].is_active) then
+			if(collide(ship,data_pickups[i])) then
 			 	config.collected+=1
-			 	config.percent_collected=config.collected/#pickups*100
-			 	pickups[i].is_active=false
+			 	config.percent_collected=config.collected/#data_pickups*100
+			 	data_pickups[i].is_active=false
 			 	sfx(3)
 			end
+		end
+	end
+
+	if(fuel_pickup.is_active) then
+		if(collide(ship,fuel_pickup)) then
+			ship.fuel=100
+			fuel_pickup.is_active=false
+			sfx(3)
 		end
 	end
 end
@@ -1082,10 +1109,6 @@ end
 --draw game interface
 function draw_interface()
 	--status
-	--print("fuel: "..ship.fuel,
-		--cam.x+2,cam.y+1,1)
-	--print("fuel: "..ship.fuel,
-		--cam.x+1,cam.y,7)
 	print("fuel: ",
 		cam.x+2,cam.y+1,1)
 	print("fuel: ",
@@ -1113,14 +1136,10 @@ function draw_interface()
 		cam.x+6,cam.y+9,1)
 	print("pad: "..abs(ceil(pad.x-ship.x+4)).."M "..arrow_direction,
 		cam.x+5,cam.y+8,7)
-
-	--if(ceil(pad.x-ship.x+4)>0) then
-		--spr(202,cam.x+)
-
 	print(config.collected.."/"..
-		#pickups,cam.x+113,cam.y+4,1)
+		#data_pickups,cam.x+113,cam.y+4,1)
 	print(config.collected.."/"..
-		#pickups,cam.x+112,cam.y+3,7)
+		#data_pickups,cam.x+112,cam.y+3,7)
 
 	--data icon (fill-up)
 	step=0
@@ -1155,9 +1174,9 @@ function draw_level_end()
 			"fUEL: "..ship.fuel.." ("..(ship.fuel*10)..")",
 			34,-8,false)
 		draw_banner(banner.subhead,
-			"dATA cOLLECTED: "..config.collected.."/"..#pickups.." (X"..config.collected..")",
+			"dATA cOLLECTED: "..config.collected.."/"..#data_pickups.." (X"..config.collected..")",
 			16,3,false)
-		if(config.collected==#pickups) then
+		if(config.collected==#data_pickups) then
 			spr(58,cam.x+113,cam.y+54)
 		end
 		draw_score_banner()
@@ -1314,24 +1333,38 @@ function draw_star(star)
 	end
 end
 
---draw data pickups
+--draw data and fuel pickups
 function draw_pickups()
-	if(#pickups>0) then
-		for i=1,#pickups do
-			if(pickups[i].is_active) then
+	if(#data_pickups>0) then
+		for i=1,#data_pickups do
+			if(data_pickups[i].is_active) then
 				--animate trace effect
 				if(upkeep.frames%2==0) then
-					pickups[i].frame+=1
-					if(pickups[i].frame == pickups[i].frames) then
+					data_pickups[i].frame+=1
+					if(data_pickups[i].frame==data_pickups[i].frames) then
 						--reset frame
-						pickups[i].frame=1
+						data_pickups[i].frame=1
 					end
 				end
 
-				spr(pickups[i].sprite+pickups[i].frame-1,
-					pickups[i].x,pickups[i].y)
+				spr(data_pickups[i].sprite+data_pickups[i].frame-1,
+					data_pickups[i].x,data_pickups[i].y)
 			end
 		end
+	end
+
+	if(fuel_pickup.is_active) then
+		--animate trace effect
+		if(upkeep.frames%2==0) then
+			fuel_pickup.frame+=1
+			if(fuel_pickup.frame == fuel_pickup.frames) then
+				--reset frame
+				fuel_pickup.frame=1
+			end
+		end
+
+		spr(fuel_pickup.sprite+fuel_pickup.frame-1,
+			fuel_pickup.x,fuel_pickup.y)
 	end
 end
 
@@ -1700,13 +1733,13 @@ __gfx__
 0000c00000000000000000000000000000000000000000000000000000000000000c000000000000000000001115555555555111000000000000000000000000
 00000cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc00000000000000000000000011cc11cc11000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000550000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005dd5000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005d66d500000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000056cc6500000000000000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d6666d00000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000565665650000000000000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006d6556d60000000000000000
+0aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa0000000000000000000000000000550000000000000000000
+00acca1100acca1100acca1100a7ca1100a67a1100ac6a1100a67a1100a7ca1100acca1100acca11000000000000000000000000005dd5000000000000000000
+00acaa1000acaa1000a7aa1000a6aa1000acaa1000acaa1000acaa1000a6aa1000a7aa1000acaa1000000000000000000000000005d66d500000000000000000
+00a6ca1000a7ca1000a67a1000ac6a1000acca1000acca1000acca1000ac6a1000a67a1000a7ca10000000000000000000000000056cc6500000000000000000
+00a7aa1000a6aa1000acaa1000acaa1000acaa1000acaa1000acaa1000acaa1000acaa1000a6aa100000000000000000000000000d6666d00000000000000000
+0aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa00aaaaaa0000000000000000000000000565665650000000000000000
+001111110011111100111111001111110011111100111111001111110011111100111111001111110000000000000000000000006d6556d60000000000000000
 __label__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
