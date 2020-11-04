@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander v2.92
+-- mun lander v2.93
 -- by lewsidboi/smolboigames, 2020
 
-version="V2.92"
+version="V2.93"
 
 --game parameters
 config={}
@@ -330,7 +330,7 @@ function init_levels()
 		saucer_dx=-3,
 		saucer_y=20
 	}
-	levels[11]={
+	levels[12]={
 		pad_x=1000,
 		pad_y=51,
 		data_pickups=#levels+1,
@@ -339,7 +339,7 @@ function init_levels()
 		saucer_dx=-3,
 		saucer_y=5
 	}
-	levels[12]={
+	levels[13]={
 		pad_x=1500,
 		pad_y=61,
 		data_pickups=#levels+1,

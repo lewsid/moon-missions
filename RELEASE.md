@@ -1,5 +1,6 @@
 Relase Notes
 ============
+  - v2.93 (2020-11-03): Fixed a crash due to duplicate level config (missing level 12!)
   - v2.92 (2020-11-03): Fixed bug preventing fuel from running out
   - v2.91 (2020-11-03): Fixed bug preventing saucer sound from stopping	
   - v2.9  (2020-11-03): Added optional up thrust button (@pjft), fuel pickups, adjusted saucer hitbox
