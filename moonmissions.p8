@@ -582,6 +582,7 @@ function init_stars()
 end
 
 function init_level(preserve)
+	upkeep={frames=0,seconds=0}
 	reset_timer()
 	config.game_state="levelintro"
 	cam={x=0,y=0}
