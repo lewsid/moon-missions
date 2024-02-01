@@ -1,10 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander v2.93
+-- mun lander v2.94
 -- by lewsidboi/smolboigames, 2020
 
-version="V2.93"
+version="V2.94"
 
 --game parameters
 config={}
@@ -556,7 +556,7 @@ function init_stars()
 				stars[star_screen_x]={}
 			end
 	    	
-	    	if(stars[star_screen_x][star_screen_y]==nil) do
+	    	if(stars[star_screen_x][star_screen_y]==nil) then
 				stars[star_screen_x][star_screen_y]={}
 
 				for i=1,config.stars_per_screen do
