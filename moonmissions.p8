@@ -1,8 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
--- mun lander v2.94
--- by lewsidboi/smolboigames, 2020
+-- mun lander v2.95
+-- by lewsidboi/smolboigames, 2024
 
 version="V2.94"
 

@@ -1,5 +1,6 @@
 Relase Notes
 ============
+  - v2.95 (2024-02-01): Fixed loop error breaking in new versions of Pico8
   - v2.94 (2020-11-05): Fixed upkeep overflow
   - v2.93 (2020-11-03): Fixed a crash due to duplicate level config (missing level 12!)
   - v2.92 (2020-11-03): Fixed bug preventing fuel from running out
