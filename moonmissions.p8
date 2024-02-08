@@ -560,7 +560,7 @@ function init_stars()
 				stars[star_screen_x][star_screen_y]={}
 
 				for i=1,config.stars_per_screen do
-					ranx_x=nil
+					rand_x=nil
 					rand_y=nil
 
 					rand_x=flr(rnd(128))+(128*(star_screen_x-1))
